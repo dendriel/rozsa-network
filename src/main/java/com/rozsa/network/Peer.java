@@ -1,6 +1,10 @@
 package com.rozsa.network;
 
 
+import com.rozsa.network.channel.DeliveryMethod;
+import com.rozsa.network.message.incoming.IncomingMessage;
+import com.rozsa.network.message.outgoing.OutgoingMessage;
+
 import java.io.NotActiveException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
@@ -32,6 +36,7 @@ public class Peer implements PacketSender, IncomingMessageQueue {
         return incomingMessages.poll();
     }
 
+    // This must be private.
     public void enqueue(IncomingMessage message) {
         incomingMessages.add(message);
     }
@@ -56,8 +61,13 @@ public class Peer implements PacketSender, IncomingMessageQueue {
         return conn;
     }
 
+    // This must be private.
     @Override
     public void send(Address address, byte[] data, int dataLen) {
         peerLoop.send(address, data, dataLen);
+    }
+
+    public void sendMessage(Connection conn, OutgoingMessage msg, DeliveryMethod deliveryMethod) {
+        conn.enqueueMessage(msg, deliveryMethod);
     }
 }

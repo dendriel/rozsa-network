@@ -1,5 +1,6 @@
 package com.rozsa.network;
 
+import com.rozsa.network.channel.DeliveryMethod;
 import com.rozsa.network.message.incoming.ConnectedMessage;
 import com.rozsa.network.proto.ConnectionResponseMessage;
 import com.rozsa.network.proto.MessageType;
@@ -37,6 +38,7 @@ public class PeerLoop extends Thread implements PacketSender {
 
     public void loop() {
         handleHandshakes();
+        handleUpdates();
         receiveIncomingPackets();
     }
 
@@ -47,6 +49,10 @@ public class PeerLoop extends Thread implements PacketSender {
 
     private void handleHandshakes() {
         connHolder.getHandshakes().forEach(Connection::handshake);
+    }
+
+    private void handleUpdates() {
+        connHolder.getConnections().forEach(Connection::update);
     }
 
     private void receiveIncomingPackets() {
@@ -92,12 +98,11 @@ public class PeerLoop extends Thread implements PacketSender {
             case DISCONNECTED:
             case SEND_CONNECT_REQUEST:
             case AWAITING_CONNECT_RESPONSE:
-                byte[] respData = new byte[1];
                 ConnectionResponseMessage resp = new ConnectionResponseMessage();
-                resp.serialize(respData, respData.length);
-                send(addr, respData, respData.length);
+                byte[] respData = resp.serialize();
+                send(addr, respData, resp.getDataLength());
                 conn.setCtrlState(ControlConnectionState.CONNECTED);
-                messageQueue.enqueue(new ConnectedMessage(addr, data, dataIdx));
+                messageQueue.enqueue(new ConnectedMessage(conn, data, dataIdx));
                 connHolder.promoteConnection(conn);
             case CONNECTED:
             case CLOSED:
@@ -117,7 +122,7 @@ public class PeerLoop extends Thread implements PacketSender {
             case AWAITING_CONNECT_RESPONSE:
                 conn.setCtrlState(ControlConnectionState.CONNECTED);
                 connHolder.promoteConnection(conn);
-                messageQueue.enqueue(new ConnectedMessage(addr, data, dataIdx));
+                messageQueue.enqueue(new ConnectedMessage(conn, data, dataIdx));
             case CONNECTED:
             case DISCONNECTED:
             case CLOSED:

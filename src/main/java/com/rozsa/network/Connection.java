@@ -1,11 +1,13 @@
 package com.rozsa.network;
 
-import com.rozsa.network.channel.BaseChannel;
-import com.rozsa.network.channel.ChannelType;
+import com.rozsa.network.channel.DeliveryMethod;
+import com.rozsa.network.channel.ReceiverChannel;
+import com.rozsa.network.channel.SenderChannel;
+import com.rozsa.network.channel.UnreliableSenderChannel;
+import com.rozsa.network.message.outgoing.OutgoingMessage;
 import com.rozsa.network.proto.ConnectionRequestMessage;
 
-import java.util.EnumMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.rozsa.network.ControlConnectionState.AWAITING_CONNECT_RESPONSE;
 
@@ -18,10 +20,9 @@ public class Connection {
     private PacketSender sender;
 
     // TODO: testing purpose
-    private EnumMap<ChannelType, BaseChannel> senderChannels;
-    private EnumMap<ChannelType, BaseChannel> receiverChannels;
-    private ConcurrentLinkedQueue<IncomingMessage> incomingMessages;
-    private ConcurrentLinkedQueue<OutgoingMessage> outgoingMessages;
+    private ConcurrentHashMap<DeliveryMethod, SenderChannel> senderChannels;
+    private ConcurrentHashMap<DeliveryMethod, ReceiverChannel> receiverChannels;
+
 
     Connection(Address address, PacketSender sender) {
         this.address = address;
@@ -30,10 +31,8 @@ public class Connection {
         state = ConnectionState.DISCONNECTED;
         ctrlState = ControlConnectionState.DISCONNECTED;
 
-        senderChannels = new EnumMap<>(ChannelType.class);
-        receiverChannels = new EnumMap<>(ChannelType.class);
-        outgoingMessages = new ConcurrentLinkedQueue<>();
-        incomingMessages = new ConcurrentLinkedQueue<>();
+        senderChannels = new ConcurrentHashMap<>();
+        receiverChannels = new ConcurrentHashMap<>();
     }
 
     public long getId() {
@@ -56,8 +55,33 @@ public class Connection {
         this.ctrlState = ctrlState;
     }
 
-    public ControlConnectionState getCtrlState() {
+    ControlConnectionState getCtrlState() {
         return ctrlState;
+    }
+
+    void enqueueMessage(OutgoingMessage msg, DeliveryMethod deliveryMethod) {
+        SenderChannel channel = getOrCreateChannel(deliveryMethod);
+        channel.enqueue(msg);
+    }
+
+    private SenderChannel getOrCreateChannel(DeliveryMethod deliveryMethod) {
+        senderChannels.computeIfAbsent(deliveryMethod, this::create);
+        return senderChannels.get(deliveryMethod);
+    }
+
+    private SenderChannel create(DeliveryMethod deliveryMethod) {
+        switch (deliveryMethod) {
+            case UNRELIABLE:
+                return new UnreliableSenderChannel(address, sender);
+            default:
+                System.out.println("Unhandled delivery method!! " + deliveryMethod);
+                return new UnreliableSenderChannel(address, sender);
+        }
+    }
+
+    void update() {
+        receiverChannels.values().forEach(ReceiverChannel::update);
+        senderChannels.values().forEach(SenderChannel::update);
     }
 
     void handshake() {
@@ -79,9 +103,8 @@ public class Connection {
     private void handleSendConnectRequest() {
         ConnectionRequestMessage connReq = new ConnectionRequestMessage();
 
-        byte[] data = new byte[1];
-        connReq.serialize(data, data.length);
-        sender.send(address, data, data.length);
+        byte[] data = connReq.serialize();
+        sender.send(address, data, connReq.getDataLength());
         ctrlState = AWAITING_CONNECT_RESPONSE;
     }
 }

@@ -1,19 +1,14 @@
 package com.rozsa.network.channel;
 
-public class BaseChannel implements Channel {
-    private final ChannelType type;
+public abstract class BaseChannel implements Channel {
+    private final DeliveryMethod type;
 
-    BaseChannel(ChannelType type) {
+    BaseChannel(DeliveryMethod type) {
         this.type = type;
     }
 
     @Override
-    public ChannelType getType() {
+    public DeliveryMethod getType() {
         return type;
-    }
-
-    @Override
-    public void update() {
-
     }
 }

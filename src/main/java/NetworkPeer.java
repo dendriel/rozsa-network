@@ -1,6 +1,10 @@
-import com.rozsa.network.IncomingMessage;
+import com.rozsa.network.Connection;
+import com.rozsa.network.channel.DeliveryMethod;
+import com.rozsa.network.message.incoming.IncomingMessage;
 import com.rozsa.network.Peer;
 import com.rozsa.network.PeerConfig;
+import com.rozsa.network.message.incoming.IncomingMessageType;
+import com.rozsa.network.message.outgoing.UserDataMessage;
 
 import java.io.NotActiveException;
 import java.net.SocketException;
@@ -24,6 +28,7 @@ class NetworkPeer {
 
     public void connect(int targetPort) throws NotActiveException, UnknownHostException {
         peer.connect("localhost", targetPort);
+        sendMsg = true;
     }
 
     private void loop() {
@@ -41,13 +46,28 @@ class NetworkPeer {
         }
     }
 
+    boolean sendMsg = false;
+
+    Connection peerConn = null;
+
     private void recvIncomingMessages() throws InterruptedException {
-        IncomingMessage msg = peer.read();
-        if (msg == null) {
+        IncomingMessage incomingMsg = peer.read();
+        if (incomingMsg == null) {
             Thread.sleep(1);
             return;
         }
 
-        System.out.println("Received message " + msg);
+        System.out.println("Received message " + incomingMsg);
+
+        if (incomingMsg.getType() == IncomingMessageType.CONNECTED) {
+            peerConn = incomingMsg.getConnection();
+        }
+
+
+        if (sendMsg) {
+            sendMsg = false;
+            UserDataMessage outgoingMsg = new UserDataMessage(incomingMsg.getDataLen());
+            peer.sendMessage(peerConn, outgoingMsg, DeliveryMethod.UNRELIABLE);
+        }
     }
 }

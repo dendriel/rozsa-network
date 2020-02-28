@@ -1,9 +1,9 @@
 package com.rozsa.network.channel;
 
-public enum ChannelType {
-    UNRELIABLE_UNORDERED,
+public enum DeliveryMethod {
+    UNRELIABLE,
     UNRELIABLE_SEQUENCED,
-    RELIABLE_UNORDERED,
+    RELIABLE,
     RELIABLE_SEQUENCE,
     RELIABLE_ORDERED,
     COUNT,

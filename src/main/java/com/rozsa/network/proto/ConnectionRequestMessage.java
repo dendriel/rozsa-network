@@ -1,6 +1,6 @@
 package com.rozsa.network.proto;
 
-import com.rozsa.network.OutgoingMessage;
+import com.rozsa.network.message.outgoing.OutgoingMessage;
 
 public class ConnectionRequestMessage extends OutgoingMessage {
     public ConnectionRequestMessage() {

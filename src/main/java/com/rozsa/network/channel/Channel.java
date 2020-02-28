@@ -1,7 +1,7 @@
 package com.rozsa.network.channel;
 
 public interface Channel {
-    ChannelType getType();
+    DeliveryMethod getType();
 
     void update();
 }
