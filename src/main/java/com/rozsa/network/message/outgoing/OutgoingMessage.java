@@ -1,7 +1,6 @@
 package com.rozsa.network.message.outgoing;
 
 import com.rozsa.network.Message;
-import com.rozsa.network.proto.MessageType;
 
 public class OutgoingMessage extends Message {
     public OutgoingMessage(MessageType type) {

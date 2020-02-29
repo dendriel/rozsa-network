@@ -1,4 +1,4 @@
-package com.rozsa.network.proto;
+package com.rozsa.network.message.outgoing;
 
 import java.util.HashMap;
 

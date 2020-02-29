@@ -1,5 +1,7 @@
 import com.rozsa.network.Connection;
+import com.rozsa.network.Logger;
 import com.rozsa.network.channel.DeliveryMethod;
+import com.rozsa.network.message.incoming.DisconnectedMessage;
 import com.rozsa.network.message.incoming.IncomingMessage;
 import com.rozsa.network.Peer;
 import com.rozsa.network.PeerConfig;
@@ -23,7 +25,7 @@ class NetworkPeer {
 
     public void start() {
         new Thread(this::loop).start();
-        System.out.println("Peer started at port " + port);
+        Logger.info("Peer started at port " + port);
     }
 
     public void connect(int targetPort) throws NotActiveException, UnknownHostException {
@@ -57,10 +59,15 @@ class NetworkPeer {
             return;
         }
 
-        System.out.println("Received message " + incomingMsg);
+        Logger.info("Received message " + incomingMsg);
 
         if (incomingMsg.getType() == IncomingMessageType.CONNECTED) {
             peerConn = incomingMsg.getConnection();
+        }
+        else if (incomingMsg.getType() == IncomingMessageType.DISCONNECTED) {
+            DisconnectedMessage disc = (DisconnectedMessage)incomingMsg;
+            Logger.info("Disconnected from %s. Reason: %s", incomingMsg.getConnection(), disc.getReason());
+            return;
         }
 
 

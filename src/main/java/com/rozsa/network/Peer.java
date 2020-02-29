@@ -20,7 +20,7 @@ public class Peer implements PacketSender, IncomingMessageQueue {
     private ConcurrentLinkedQueue<IncomingMessage> incomingMessages;
 
     public Peer(PeerConfig config) throws SocketException {
-        connHolder = new ConnectionHolder(this);
+        connHolder = new ConnectionHolder(config,this);
         peerLoop = new PeerLoop(connHolder, this, config);
         this.config = config;
         isInitialized = false;
@@ -50,7 +50,7 @@ public class Peer implements PacketSender, IncomingMessageQueue {
     public Connection connect(String ip, int port) throws NotActiveException, UnknownHostException {
         assertInitialized();
 
-        System.out.printf("Connecting to %s:%d\n", ip, port);
+        Logger.info("Connecting to %s:%d", ip, port);
 
         Address address =  Address.from(ip, port);
         Connection conn = connHolder.getConnection(address.getId());

@@ -5,11 +5,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 
 class ConnectionHolder {
+    private final PeerConfig config;
     private final PacketSender sender;
     private final ConcurrentHashMap<Long, Connection> handshakes;
     private final ConcurrentHashMap<Long, Connection> connections;
 
-    public ConnectionHolder(PacketSender sender) {
+    public ConnectionHolder(PeerConfig config, PacketSender sender) {
+        this.config = config;
         this.sender = sender;
         handshakes = new ConcurrentHashMap<>();
         connections = new ConcurrentHashMap<>();
@@ -36,7 +38,7 @@ class ConnectionHolder {
         handshakes.remove(conn.getId());
         conn.setCtrlState(ControlConnectionState.CONNECTED);
         connections.put(conn.getId(), conn);
-        System.out.printf("Handshake %s has been promoted.\n", conn.getAddress());
+        Logger.info("Handshake %s has been promoted.\n", conn.getAddress());
     }
 
     Connection createAsIncomingHandshake(Address addr) {
@@ -48,7 +50,7 @@ class ConnectionHolder {
     }
 
     Connection createAsHandshake(Address addr, ControlConnectionState state) {
-        Connection handshake = new Connection(addr, sender);
+        Connection handshake = new Connection(config, addr, sender);
         handshake.setCtrlState(state);
         handshakes.put(addr.getId(), handshake);
         return handshake;
@@ -60,5 +62,9 @@ class ConnectionHolder {
 
     Collection<Connection> getHandshakes() {
         return handshakes.values();
+    }
+
+    void removeHandshake(Connection conn) {
+        handshakes.remove(conn.getId());
     }
 }

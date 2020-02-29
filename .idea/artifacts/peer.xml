@@ -1,0 +1,6 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="peer">
+    <output-path>$PROJECT_DIR$/out/artifacts/peer</output-path>
+    <root id="archive" name="peer.jar" />
+  </artifact>
+</component>

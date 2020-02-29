@@ -8,6 +8,10 @@ public class IncomingMessage {
     private final int dataLen;
     private Connection connection;
 
+    IncomingMessage(IncomingMessageType type, Connection connection) {
+        this(type, connection, null, 0);
+    }
+
     IncomingMessage(IncomingMessageType type, Connection connection, byte[] data, int dataLen) {
         this.type = type;
         this.connection = connection;

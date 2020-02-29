@@ -1,4 +1,11 @@
 package com.rozsa.network;
 
-public class Clock {
+class Clock {
+    static long getCurrentTime() {
+        return System.currentTimeMillis();
+    }
+
+    static long getTimePassedSince(long time) {
+        return getCurrentTime() - time;
+    }
 }

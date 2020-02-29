@@ -1,6 +1,6 @@
 package com.rozsa.network;
 
-import com.rozsa.network.proto.MessageType;
+import com.rozsa.network.message.outgoing.MessageType;
 
 public abstract class Message {
     protected final MessageType type;

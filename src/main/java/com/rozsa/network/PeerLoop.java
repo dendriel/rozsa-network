@@ -1,12 +1,13 @@
 package com.rozsa.network;
 
-import com.rozsa.network.channel.DeliveryMethod;
 import com.rozsa.network.message.incoming.ConnectedMessage;
-import com.rozsa.network.proto.ConnectionResponseMessage;
-import com.rozsa.network.proto.MessageType;
+import com.rozsa.network.message.incoming.DisconnectedMessage;
+import com.rozsa.network.message.outgoing.ConnectionResponseMessage;
+import com.rozsa.network.message.outgoing.MessageType;
 
 import java.net.DatagramPacket;
 import java.net.SocketException;
+import java.util.Collection;
 
 public class PeerLoop extends Thread implements PacketSender {
     private final UDPSocket udpSocket;
@@ -37,14 +38,30 @@ public class PeerLoop extends Thread implements PacketSender {
     }
 
     public void loop() {
+        handleExpiredHandshakes();
         handleHandshakes();
         handleUpdates();
         receiveIncomingPackets();
     }
 
     public void send(Address addr, byte[] data, int dataLen) {
-        System.out.println("Sending outgoing message of " + MessageType.from(data[0]) + " " + addr);
+        Logger.info("Sending outgoing message of " + MessageType.from(data[0]) + " " + addr);
         udpSocket.send(addr.getNetAddress(), addr.getPort(), data, dataLen);
+    }
+
+    private void handleExpiredHandshakes() {
+        Collection<Connection> handshakes = connHolder.getHandshakes();
+        for (Connection conn : handshakes) {
+            if (conn.isHandshakeExpired()) {
+                removeExpiredHandshake(conn);
+            }
+        }
+    }
+
+    private void removeExpiredHandshake(Connection conn) {
+        connHolder.removeHandshake(conn);
+        DisconnectedMessage disconnectedMessage = new DisconnectedMessage(conn, DisconnectReason.NO_RESPONSE);
+        messageQueue.enqueue(disconnectedMessage);
     }
 
     private void handleHandshakes() {
@@ -71,7 +88,7 @@ public class PeerLoop extends Thread implements PacketSender {
     }
 
     private void handleIncomingMessage(MessageType type, Address addr, byte[] data, int dataIdx) {
-        System.out.println("Received incoming message of " + type + " " + addr);
+        Logger.info("Received incoming message of " + type + " " + addr);
 
         switch (type) {
             case CONNECTION_REQUEST:
@@ -102,7 +119,7 @@ public class PeerLoop extends Thread implements PacketSender {
                 byte[] respData = resp.serialize();
                 send(addr, respData, resp.getDataLength());
                 conn.setCtrlState(ControlConnectionState.CONNECTED);
-                messageQueue.enqueue(new ConnectedMessage(conn, data, dataIdx));
+                messageQueue.enqueue(new ConnectedMessage(conn));
                 connHolder.promoteConnection(conn);
             case CONNECTED:
             case CLOSED:
@@ -122,7 +139,7 @@ public class PeerLoop extends Thread implements PacketSender {
             case AWAITING_CONNECT_RESPONSE:
                 conn.setCtrlState(ControlConnectionState.CONNECTED);
                 connHolder.promoteConnection(conn);
-                messageQueue.enqueue(new ConnectedMessage(conn, data, dataIdx));
+                messageQueue.enqueue(new ConnectedMessage(conn));
             case CONNECTED:
             case DISCONNECTED:
             case CLOSED:

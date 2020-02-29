@@ -13,6 +13,8 @@ class UDPSocket {
         socket = new DatagramSocket(port);
         socket.setSoTimeout(pollTimeInMillis);
         buf = new byte[recvBufferSize];
+
+        Logger.info("Socket bound at %s:%d", socket.getLocalAddress().getHostAddress(), socket.getLocalPort());
     }
 
     void send(InetAddress netAddr, int port, byte[] data, int dataLen) {
