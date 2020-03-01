@@ -9,7 +9,7 @@ import com.rozsa.network.message.outgoing.ConnectRequestMessage;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.rozsa.network.ControlConnectionState.*;
+import static com.rozsa.network.ConnectionState.*;
 
 public class Connection {
     private final PeerConfig config;
@@ -22,7 +22,6 @@ public class Connection {
     private long connectRequestReceivedTime;
 
     private ConnectionState state;
-    private ControlConnectionState ctrlState;
 
     // TODO: testing purpose
     private ConcurrentHashMap<DeliveryMethod, SenderChannel> senderChannels;
@@ -35,7 +34,6 @@ public class Connection {
         this.sender = sender;
 
         state = ConnectionState.DISCONNECTED;
-        ctrlState = ControlConnectionState.DISCONNECTED;
 
         senderChannels = new ConcurrentHashMap<>();
         receiverChannels = new ConcurrentHashMap<>();
@@ -49,40 +47,33 @@ public class Connection {
         return address;
     }
 
-    public boolean isClosed() {
-        return ctrlState.equals(ControlConnectionState.CLOSED);
+    void setState(ConnectionState state) {
+        this.state = state;
     }
 
     public ConnectionState getState() {
         return state;
     }
 
-    void setCtrlState(ControlConnectionState ctrlState) {
-        this.ctrlState = ctrlState;
-    }
-
     void setAwaitingConnectEstablished() {
-        setCtrlState(AWAITING_CONNECT_ESTABLISHED);
+        setState(AWAITING_CONNECT_ESTABLISHED);
         connectRequestReceivedTime = Clock.getCurrentTime();
     }
 
     void sendConnectRequest() {
-        setCtrlState(SEND_CONNECT_REQUEST);
+        setState(SEND_CONNECT_REQUEST);
         lastHandshakeAttemptTime = Clock.getCurrentTime();
         totalHandshakesAttempts = 0;
     }
 
-    ControlConnectionState getCtrlState() {
-        return ctrlState;
-    }
-
     boolean isHandshakeExpired() {
-        return totalHandshakesAttempts >= config.getMaximumHandshakeAttempts();
+        return totalHandshakesAttempts >= config.getMaximumHandshakeAttempts() &&
+                !isLastHandshakeInProgress();
     }
 
     boolean isAwaitingConnectionEstablishedExpired() {
         boolean isWaitingConnectionEstablishedExpired = Clock.getTimePassedSince(connectRequestReceivedTime) > config.getMaximumHandshakeWaitingTime();
-        if (ctrlState == AWAITING_CONNECT_ESTABLISHED && isWaitingConnectionEstablishedExpired) {
+        if (state == AWAITING_CONNECT_ESTABLISHED && isWaitingConnectionEstablishedExpired) {
             return true;
         }
 
@@ -115,7 +106,7 @@ public class Connection {
     }
 
     void handshake() {
-        switch (ctrlState) {
+        switch (state) {
             case SEND_CONNECT_REQUEST:
             case AWAITING_CONNECT_RESPONSE:
                 handleSendConnectRequest();
@@ -139,7 +130,7 @@ public class Connection {
         byte[] data = connReq.serialize();
         sender.send(address, data, connReq.getDataLength());
 
-        ctrlState = AWAITING_CONNECT_RESPONSE;
+        state = AWAITING_CONNECT_RESPONSE;
 
         lastHandshakeAttemptTime = Clock.getCurrentTime();
         totalHandshakesAttempts++;
@@ -161,8 +152,7 @@ public class Connection {
     public String toString() {
         return "Connection{" +
                 "address=" + address.getIp() + ":" + address.getPort() +
-                ", state=" + state +
-                ", ctrlState=" + ctrlState +
+                ", ctrlState=" + state +
                 '}';
     }
 }

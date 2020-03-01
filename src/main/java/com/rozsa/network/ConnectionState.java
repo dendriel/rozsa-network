@@ -1,8 +1,10 @@
 package com.rozsa.network;
 
 public enum ConnectionState {
-    DISCONNECTED,
-    CONNECTING,
+    SEND_CONNECT_REQUEST,
+    AWAITING_CONNECT_RESPONSE,
+    AWAITING_CONNECT_ESTABLISHED,
     CONNECTED,
+    DISCONNECTED,
     CLOSED,
 }

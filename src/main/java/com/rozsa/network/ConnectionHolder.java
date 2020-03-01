@@ -5,15 +5,19 @@ import java.util.concurrent.ConcurrentHashMap;
 
 class ConnectionHolder {
     private final PeerConfig config;
-    private final PacketSender sender;
     private final ConcurrentHashMap<Long, Connection> handshakes;
     private final ConcurrentHashMap<Long, Connection> connections;
 
-    ConnectionHolder(PeerConfig config, PacketSender sender) {
+    private PacketSender sender;
+
+    ConnectionHolder(PeerConfig config) {
         this.config = config;
-        this.sender = sender;
         handshakes = new ConcurrentHashMap<>();
         connections = new ConcurrentHashMap<>();
+    }
+
+    void setPacketSender(PacketSender sender) {
+        this.sender = sender;
     }
 
     Connection getConnection(long id) {
@@ -35,22 +39,22 @@ class ConnectionHolder {
 
     void promoteConnection(Connection conn) {
         handshakes.remove(conn.getId());
-        conn.setCtrlState(ControlConnectionState.CONNECTED);
+        conn.setState(ConnectionState.CONNECTED);
         connections.put(conn.getId(), conn);
         Logger.info("Handshake %s has been promoted.", conn.getAddress());
     }
 
     Connection createAsIncomingHandshake(Address addr) {
-        return createAsHandshake(addr, ControlConnectionState.DISCONNECTED);
+        return createAsHandshake(addr, ConnectionState.DISCONNECTED);
     }
 
     Connection createAsOutgoingHandshake(Address addr) {
-        return createAsHandshake(addr, ControlConnectionState.SEND_CONNECT_REQUEST);
+        return createAsHandshake(addr, ConnectionState.SEND_CONNECT_REQUEST);
     }
 
-    Connection createAsHandshake(Address addr, ControlConnectionState state) {
+    private Connection createAsHandshake(Address addr, ConnectionState state) {
         Connection handshake = new Connection(config, addr, sender);
-        handshake.setCtrlState(state);
+        handshake.setState(state);
         handshakes.put(addr.getId(), handshake);
         return handshake;
     }
@@ -63,11 +67,11 @@ class ConnectionHolder {
         return handshakes.values();
     }
 
-    void removeHandshakeIfAwaitingConnectionEstablishedExpired() {
-
-    }
-
     void removeHandshake(Connection conn) {
         handshakes.remove(conn.getId());
+    }
+
+    void removeConnection(Connection conn) {
+        connections.remove(conn.getId());
     }
 }
