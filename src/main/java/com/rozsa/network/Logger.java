@@ -11,6 +11,11 @@ public class Logger {
         printLog(msg, "INFO");
     }
 
+    public static void warn(String format, Object...args) {
+        String msg = String.format(format, args);
+        printLog(msg, "WARN");
+    }
+
     private static void printLog(String msg, String severity) {
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
         Date date = new Date();

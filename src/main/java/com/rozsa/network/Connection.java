@@ -5,7 +5,7 @@ import com.rozsa.network.channel.ReceiverChannel;
 import com.rozsa.network.channel.SenderChannel;
 import com.rozsa.network.channel.UnreliableSenderChannel;
 import com.rozsa.network.message.outgoing.OutgoingMessage;
-import com.rozsa.network.message.outgoing.ConnectionRequestMessage;
+import com.rozsa.network.message.outgoing.ConnectRequestMessage;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -98,6 +98,7 @@ public class Connection {
             case AWAITING_CONNECT_RESPONSE:
                 handleSendConnectRequest();
                 break;
+            case AWAITING_CONNECT_ESTABLISHED:
             case DISCONNECTED:
             case CLOSED:
             case CONNECTED:
@@ -111,10 +112,10 @@ public class Connection {
             return;
         }
 
-        ConnectionRequestMessage connReq = new ConnectionRequestMessage();
-
+        ConnectRequestMessage connReq = new ConnectRequestMessage();
         byte[] data = connReq.serialize();
         sender.send(address, data, connReq.getDataLength());
+
         ctrlState = AWAITING_CONNECT_RESPONSE;
 
         lastHandshakeAttemptTime = Clock.getCurrentTime();

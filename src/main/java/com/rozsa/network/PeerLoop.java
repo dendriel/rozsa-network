@@ -2,7 +2,8 @@ package com.rozsa.network;
 
 import com.rozsa.network.message.incoming.ConnectedMessage;
 import com.rozsa.network.message.incoming.DisconnectedMessage;
-import com.rozsa.network.message.outgoing.ConnectionResponseMessage;
+import com.rozsa.network.message.outgoing.ConnectEstablishedMessage;
+import com.rozsa.network.message.outgoing.ConnectResponseMessage;
 import com.rozsa.network.message.outgoing.MessageType;
 
 import java.net.DatagramPacket;
@@ -91,13 +92,19 @@ public class PeerLoop extends Thread implements PacketSender {
         Logger.info("Received incoming message of " + type + " " + addr);
 
         switch (type) {
-            case CONNECTION_REQUEST:
+            case CONNECT_REQUEST:
                 handleConnectionRequest(addr, data, dataIdx);
                 break;
-            case CONNECTION_RESPONSE:
+            case CONNECT_RESPONSE:
                 handleConnectionResponse(addr, data, dataIdx);
                 break;
-            case CONNECTION_DENIED:
+            case CONNECT_ESTABLISHED:
+                handleConnectionEstablished(addr, data, dataIdx);
+                break;
+            case CONNECT_DENIED:
+                break;
+            case USER_DATA:
+                handleUserData(addr, data, dataIdx);
                 break;
             case UNKNOWN:
             default:
@@ -113,19 +120,34 @@ public class PeerLoop extends Thread implements PacketSender {
 
         switch (conn.getCtrlState()) {
             case DISCONNECTED:
+                // if disconnected, send connect response and await for connect established.
+                conn.setCtrlState(ControlConnectionState.AWAITING_CONNECT_ESTABLISHED);
+                sendConnectResponse(conn);
+                break;
+
             case SEND_CONNECT_REQUEST:
             case AWAITING_CONNECT_RESPONSE:
-                ConnectionResponseMessage resp = new ConnectionResponseMessage();
-                byte[] respData = resp.serialize();
-                send(addr, respData, resp.getDataLength());
-                conn.setCtrlState(ControlConnectionState.CONNECTED);
+            case AWAITING_CONNECT_ESTABLISHED:
+                // if received connect request while sending connect request itself, establish the connection right away.
                 messageQueue.enqueue(new ConnectedMessage(conn));
                 connHolder.promoteConnection(conn);
+                sendConnectEstablished(conn);
+                break;
+
             case CONNECTED:
+                Logger.info("Already connected to %s. Resend connect response.", conn);
+                sendConnectEstablished(conn);
+                break;
             case CLOSED:
             default:
                 break;
         }
+    }
+
+    private void sendConnectResponse(Connection conn) {
+        ConnectResponseMessage resp = new ConnectResponseMessage();
+        byte[] respData = resp.serialize();
+        send(conn.getAddress(), respData, resp.getDataLength());
     }
 
     private void handleConnectionResponse(Address addr, byte[] data, int dataIdx) {
@@ -140,12 +162,79 @@ public class PeerLoop extends Thread implements PacketSender {
                 conn.setCtrlState(ControlConnectionState.CONNECTED);
                 connHolder.promoteConnection(conn);
                 messageQueue.enqueue(new ConnectedMessage(conn));
+                sendConnectEstablished(conn);
+                break;
             case CONNECTED:
+                Logger.info("Already connected to %s. Resend connect established.", conn);
+                sendConnectEstablished(conn);
+                break;
             case DISCONNECTED:
             case CLOSED:
             default:
                 break;
         }
+    }
+
+
+    private void handleConnectionEstablished(Address addr, byte[] data, int dataIdx) {
+        Connection conn = connHolder.getHandshakeOrConnection(addr.getId());
+        if (conn == null) {
+            conn = connHolder.createAsIncomingHandshake(addr);
+        }
+
+        switch (conn.getCtrlState()) {
+            case AWAITING_CONNECT_RESPONSE:
+            case AWAITING_CONNECT_ESTABLISHED:
+            case SEND_CONNECT_REQUEST:
+                conn.setCtrlState(ControlConnectionState.CONNECTED);
+                connHolder.promoteConnection(conn);
+                messageQueue.enqueue(new ConnectedMessage(conn));
+                break;
+            case CONNECTED:
+                Logger.info("Already connected to %s.", conn);
+                break;
+            case DISCONNECTED:
+            case CLOSED:
+            default:
+                break;
+        }
+    }
+
+    private void handleUserData(Address addr, byte[] data, int dataIdx) {
+        Connection conn = connHolder.getHandshakeOrConnection(addr.getId());
+        if (conn == null) {
+            Logger.warn("Received user data from %s but handshake nor connection doesn't even exist!.", addr);
+            return;
+        }
+
+        switch (conn.getCtrlState()) {
+            case CONNECTED:
+                Logger.info("Received user data from %s.", conn);
+                // enqueue user data.
+                break;
+            case AWAITING_CONNECT_ESTABLISHED:
+                // received user data while waiting for connect established. Connect established message must got lost in
+                // its way. Consider this user data as a sign of connection established.
+                conn.setCtrlState(ControlConnectionState.CONNECTED);
+                connHolder.promoteConnection(conn);
+                messageQueue.enqueue(new ConnectedMessage(conn));
+                // enqueue user data.
+                break;
+            case AWAITING_CONNECT_RESPONSE:
+            case SEND_CONNECT_REQUEST:
+            case DISCONNECTED:
+                Logger.warn("Received user data from %s but isn't connected yet.", conn);
+            case CLOSED:
+                Logger.warn("Received user data from %s but connection is closed!.", addr);
+            default:
+                break;
+        }
+    }
+
+    private void sendConnectEstablished(Connection conn) {
+        ConnectEstablishedMessage resp = new ConnectEstablishedMessage();
+        byte[] respData = resp.serialize();
+        send(conn.getAddress(), respData, resp.getDataLength());
     }
 
     private void handleConnections() {

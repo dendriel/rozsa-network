@@ -4,10 +4,11 @@ import java.util.HashMap;
 
 public enum MessageType {
     UNKNOWN(-1),
-    CONNECTION_REQUEST(1),
-    CONNECTION_RESPONSE(2),
-    CONNECTION_DENIED(3),
-    USER_DATA(4),
+    CONNECT_REQUEST(1),
+    CONNECT_RESPONSE(2),
+    CONNECT_ESTABLISHED(3),
+    CONNECT_DENIED(4),
+    USER_DATA(5),
     ;
 
     private final byte id;
@@ -25,9 +26,10 @@ public enum MessageType {
     static {
         idToTypeMapper = new HashMap<>();
         idToTypeMapper.put(UNKNOWN.getId(), UNKNOWN);
-        idToTypeMapper.put(CONNECTION_REQUEST.getId(), CONNECTION_REQUEST);
-        idToTypeMapper.put(CONNECTION_RESPONSE.getId(), CONNECTION_RESPONSE);
-        idToTypeMapper.put(CONNECTION_DENIED.getId(), CONNECTION_DENIED);
+        idToTypeMapper.put(CONNECT_REQUEST.getId(), CONNECT_REQUEST);
+        idToTypeMapper.put(CONNECT_RESPONSE.getId(), CONNECT_RESPONSE);
+        idToTypeMapper.put(CONNECT_ESTABLISHED.getId(), CONNECT_ESTABLISHED);
+        idToTypeMapper.put(CONNECT_DENIED.getId(), CONNECT_DENIED);
         idToTypeMapper.put(USER_DATA.getId(), USER_DATA);
     }
 

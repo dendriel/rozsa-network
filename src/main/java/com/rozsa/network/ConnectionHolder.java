@@ -38,7 +38,7 @@ class ConnectionHolder {
         handshakes.remove(conn.getId());
         conn.setCtrlState(ControlConnectionState.CONNECTED);
         connections.put(conn.getId(), conn);
-        Logger.info("Handshake %s has been promoted.\n", conn.getAddress());
+        Logger.info("Handshake %s has been promoted.", conn.getAddress());
     }
 
     Connection createAsIncomingHandshake(Address addr) {
