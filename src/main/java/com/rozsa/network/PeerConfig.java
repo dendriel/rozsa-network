@@ -4,6 +4,7 @@ public class PeerConfig {
     private int port;
     private int maximumHandshakeAttempts;
     private long intervalBetweenHandshakes;
+    private long maximumHandshakeWaitingTime;
 
     public PeerConfig() {
         this(0);
@@ -13,6 +14,7 @@ public class PeerConfig {
         this.port = port;
         maximumHandshakeAttempts = Constants.DefaultMaximumHandshakeAttempts;
         intervalBetweenHandshakes = Constants.DefaultIntervalBetweenHandshakesInMillis;
+        maximumHandshakeWaitingTime = maximumHandshakeAttempts * intervalBetweenHandshakes;
     }
 
     public int getPort() {
@@ -37,5 +39,9 @@ public class PeerConfig {
 
     public void setIntervalBetweenHandshakes(long intervalBetweenHandshakes) {
         this.intervalBetweenHandshakes = intervalBetweenHandshakes;
+    }
+
+    public long getMaximumHandshakeWaitingTime() {
+        return maximumHandshakeWaitingTime;
     }
 }

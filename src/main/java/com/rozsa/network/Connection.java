@@ -9,7 +9,7 @@ import com.rozsa.network.message.outgoing.ConnectRequestMessage;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.rozsa.network.ControlConnectionState.AWAITING_CONNECT_RESPONSE;
+import static com.rozsa.network.ControlConnectionState.*;
 
 public class Connection {
     private final PeerConfig config;
@@ -18,6 +18,8 @@ public class Connection {
 
     private long lastHandshakeAttemptTime;
     private int totalHandshakesAttempts;
+
+    private long connectRequestReceivedTime;
 
     private ConnectionState state;
     private ControlConnectionState ctrlState;
@@ -59,12 +61,32 @@ public class Connection {
         this.ctrlState = ctrlState;
     }
 
+    void setAwaitingConnectEstablished() {
+        setCtrlState(AWAITING_CONNECT_ESTABLISHED);
+        connectRequestReceivedTime = Clock.getCurrentTime();
+    }
+
+    void sendConnectRequest() {
+        setCtrlState(SEND_CONNECT_REQUEST);
+        lastHandshakeAttemptTime = Clock.getCurrentTime();
+        totalHandshakesAttempts = 0;
+    }
+
     ControlConnectionState getCtrlState() {
         return ctrlState;
     }
 
-    public boolean isHandshakeExpired() {
+    boolean isHandshakeExpired() {
         return totalHandshakesAttempts >= config.getMaximumHandshakeAttempts();
+    }
+
+    boolean isAwaitingConnectionEstablishedExpired() {
+        boolean isWaitingConnectionEstablishedExpired = Clock.getTimePassedSince(connectRequestReceivedTime) > config.getMaximumHandshakeWaitingTime();
+        if (ctrlState == AWAITING_CONNECT_ESTABLISHED && isWaitingConnectionEstablishedExpired) {
+            return true;
+        }
+
+        return false;
     }
 
     void enqueueMessage(OutgoingMessage msg, DeliveryMethod deliveryMethod) {
@@ -99,6 +121,7 @@ public class Connection {
                 handleSendConnectRequest();
                 break;
             case AWAITING_CONNECT_ESTABLISHED:
+                handleAwaitingConnectEstablished();
             case DISCONNECTED:
             case CLOSED:
             case CONNECTED:
@@ -122,6 +145,10 @@ public class Connection {
         totalHandshakesAttempts++;
     }
 
+    private void handleAwaitingConnectEstablished() {
+
+    }
+
     private boolean isLastHandshakeInProgress() {
         if (totalHandshakesAttempts == 0) {
             return false;
@@ -133,9 +160,7 @@ public class Connection {
     @Override
     public String toString() {
         return "Connection{" +
-                "address=" + address +
-                ", lastHandshakeAttemptTime=" + lastHandshakeAttemptTime +
-                ", totalHandshakesAttempts=" + totalHandshakesAttempts +
+                "address=" + address.getIp() + ":" + address.getPort() +
                 ", state=" + state +
                 ", ctrlState=" + ctrlState +
                 '}';

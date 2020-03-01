@@ -3,14 +3,13 @@ package com.rozsa.network;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 
-
 class ConnectionHolder {
     private final PeerConfig config;
     private final PacketSender sender;
     private final ConcurrentHashMap<Long, Connection> handshakes;
     private final ConcurrentHashMap<Long, Connection> connections;
 
-    public ConnectionHolder(PeerConfig config, PacketSender sender) {
+    ConnectionHolder(PeerConfig config, PacketSender sender) {
         this.config = config;
         this.sender = sender;
         handshakes = new ConcurrentHashMap<>();
@@ -62,6 +61,10 @@ class ConnectionHolder {
 
     Collection<Connection> getHandshakes() {
         return handshakes.values();
+    }
+
+    void removeHandshakeIfAwaitingConnectionEstablishedExpired() {
+
     }
 
     void removeHandshake(Connection conn) {

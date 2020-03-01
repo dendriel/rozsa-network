@@ -56,6 +56,12 @@ public class PeerLoop extends Thread implements PacketSender {
             if (conn.isHandshakeExpired()) {
                 removeExpiredHandshake(conn);
             }
+
+            if (conn.isAwaitingConnectionEstablishedExpired()) {
+                // may concur with user thread trying to connect to this address. [?!]
+                Logger.info("Handshake expired while waiting for connection established from %s.", conn);
+                connHolder.removeHandshake(conn);
+            }
         }
     }
 
@@ -89,7 +95,7 @@ public class PeerLoop extends Thread implements PacketSender {
     }
 
     private void handleIncomingMessage(MessageType type, Address addr, byte[] data, int dataIdx) {
-        Logger.info("Received incoming message of " + type + " " + addr);
+        Logger.info("Received incoming message " + type + " from " + addr);
 
         switch (type) {
             case CONNECT_REQUEST:
@@ -121,7 +127,7 @@ public class PeerLoop extends Thread implements PacketSender {
         switch (conn.getCtrlState()) {
             case DISCONNECTED:
                 // if disconnected, send connect response and await for connect established.
-                conn.setCtrlState(ControlConnectionState.AWAITING_CONNECT_ESTABLISHED);
+                conn.setAwaitingConnectEstablished();
                 sendConnectResponse(conn);
                 break;
 
@@ -139,6 +145,7 @@ public class PeerLoop extends Thread implements PacketSender {
                 sendConnectEstablished(conn);
                 break;
             case CLOSED:
+                Logger.info("Already closed connection with %s. Send closed response.", conn);
             default:
                 break;
         }

@@ -59,7 +59,7 @@ class NetworkPeer {
             return;
         }
 
-        Logger.info("Received message " + incomingMsg);
+//        Logger.info("INCOMING " + incomingMsg);
 
         if (incomingMsg.getType() == IncomingMessageType.CONNECTED) {
             peerConn = incomingMsg.getConnection();

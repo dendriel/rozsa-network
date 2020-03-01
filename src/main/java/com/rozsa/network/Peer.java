@@ -50,14 +50,21 @@ public class Peer implements PacketSender, IncomingMessageQueue {
     public Connection connect(String ip, int port) throws NotActiveException, UnknownHostException {
         assertInitialized();
 
-        Logger.info("Connecting to %s:%d", ip, port);
-
-        Address address =  Address.from(ip, port);
-        Connection conn = connHolder.getConnection(address.getId());
-        if (conn == null) {
-            return connHolder.createAsOutgoingHandshake(address);
+        Address addr =  Address.from(ip, port);
+        Connection conn = connHolder.getConnection(addr.getId());
+        if (conn != null) {
+            Logger.info("Already connected to %s:%d", ip, port);
+            return conn;
         }
 
+        Logger.info("Connecting to %s:%d", ip, port);
+
+        conn = connHolder.getHandshake(addr.getId());
+        if (conn == null) {
+            return connHolder.createAsOutgoingHandshake(addr);
+        }
+
+        conn.sendConnectRequest();
         return conn;
     }
 
