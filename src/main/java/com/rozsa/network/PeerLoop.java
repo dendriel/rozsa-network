@@ -5,7 +5,6 @@ import com.rozsa.network.message.outgoing.*;
 
 import java.net.DatagramPacket;
 import java.net.SocketException;
-import java.util.Collection;
 import java.util.EnumMap;
 
 public class PeerLoop extends Thread implements PacketSender {
@@ -32,8 +31,9 @@ public class PeerLoop extends Thread implements PacketSender {
         messageHandlers.put(MessageType.CONNECTION_REQUEST, new ConnectionRequestHandler(connHolder, messageQueue, this));
         messageHandlers.put(MessageType.CONNECTION_RESPONSE, new ConnectionResponseHandler(connHolder, messageQueue, this));
         messageHandlers.put(MessageType.CONNECTION_ESTABLISHED, new ConnectionEstablishedHandler(connHolder, messageQueue));
-        messageHandlers.put(MessageType.USER_DATA, new UserDataHandler(connHolder, messageQueue));
         messageHandlers.put(MessageType.CONNECTION_DENIED, new ConnectionDeniedHandler());
+        messageHandlers.put(MessageType.PING, new PingMessageHandler(connHolder));
+        messageHandlers.put(MessageType.USER_DATA, new UserDataHandler(connHolder, messageQueue));
         messageHandlers.put(MessageType.UNKNOWN, new UnknownMessageHandler());
     }
 
@@ -51,7 +51,9 @@ public class PeerLoop extends Thread implements PacketSender {
     private void loop() {
         handleExpiredHandshakes();
         handleHandshakes();
+
         handleUpdates();
+        handleDisconnects();
 
         receivePackets();
     }
@@ -62,23 +64,34 @@ public class PeerLoop extends Thread implements PacketSender {
     }
 
     private void handleExpiredHandshakes() {
-        Collection<Connection> handshakes = connHolder.getHandshakes();
-        for (Connection conn : handshakes) {
-            if (conn.isHandshakeExpired()) {
-                removeExpiredHandshake(conn);
-            }
+        connHolder.getHandshakes().forEach(this::expireHandshakes);
+    }
 
-            if (conn.isAwaitingConnectionEstablishedExpired()) {
-                // may concur with user thread trying to connect to this address. [?!]
-                Logger.info("Handshake expired while waiting for connection established from %s.", conn);
-                connHolder.removeHandshake(conn);
-            }
+    private void expireHandshakes(Connection conn) {
+        if (conn.isHandshakeExpired()) {
+            connHolder.removeHandshake(conn);
+            DisconnectedMessage disconnectedMessage = new DisconnectedMessage(conn, DisconnectReason.NO_RESPONSE);
+            messageQueue.enqueue(disconnectedMessage);
+        }
+
+        if (conn.isAwaitingConnectionEstablishedExpired()) {
+            // may concur with user thread trying to connect to this address. [?!]
+            Logger.info("Handshake expired while waiting for connection established from %s.", conn);
+            connHolder.removeHandshake(conn);
         }
     }
 
-    private void removeExpiredHandshake(Connection conn) {
-        connHolder.removeHandshake(conn);
-        DisconnectedMessage disconnectedMessage = new DisconnectedMessage(conn, DisconnectReason.NO_RESPONSE);
+    private void handleDisconnects() {
+        connHolder.getConnections().forEach(this::handleDisconnect);
+    }
+
+    private void handleDisconnect(Connection conn) {
+        if (conn.getState() != ConnectionState.DISCONNECTED) {
+            return;
+        }
+        connHolder.removeConnection(conn);
+
+        DisconnectedMessage disconnectedMessage = new DisconnectedMessage(conn, conn.getDisconnectReason());
         messageQueue.enqueue(disconnectedMessage);
     }
 
@@ -93,7 +106,7 @@ public class PeerLoop extends Thread implements PacketSender {
     private void receivePackets() {
         DatagramPacket packet = udpSocket.receive();
         if (packet == null) {
-            // Socket timeout. Won't burn the CPU.
+            // Socket timeout. It won't burn the CPU.
             return;
         }
 
@@ -102,11 +115,7 @@ public class PeerLoop extends Thread implements PacketSender {
         byte[] data = packet.getData();
         MessageType type = MessageType.from(data[dataIdx++]);
 
-        handleIncomingMessage(type, addr, data, dataIdx);
-    }
-
-    private void handleIncomingMessage(MessageType type, Address addr, byte[] data, int dataIdx) {
-        Logger.info("Received " + type + " from " + addr);
+        Logger.info("Received %s %s", type, addr);
 
         IncomingMessageHandler handler = messageHandlers.getOrDefault(type, new UnknownMessageHandler());
         handler.handle(addr, data, dataIdx);

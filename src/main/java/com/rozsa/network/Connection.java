@@ -15,13 +15,14 @@ public class Connection {
     private final PeerConfig config;
     private final Address address;
     private final PacketSender sender;
+    private final ConnectionHeartbeat heartbeat;
+    private final long maximumHandshakeWaitingTime;
 
     private long lastHandshakeAttemptTime;
     private int totalHandshakesAttempts;
-
     private long connectRequestReceivedTime;
-
     private ConnectionState state;
+    private DisconnectReason disconnectReason;
 
     // TODO: testing purpose
     private ConcurrentHashMap<DeliveryMethod, SenderChannel> senderChannels;
@@ -33,8 +34,11 @@ public class Connection {
         this.address = address;
         this.sender = sender;
 
+        maximumHandshakeWaitingTime = config.getMaximumHandshakeAttempts() * config.getIntervalBetweenHandshakes();
         state = ConnectionState.DISCONNECTED;
+        disconnectReason = DisconnectReason.NONE;
 
+        heartbeat = new ConnectionHeartbeat(config, this, sender);
         senderChannels = new ConcurrentHashMap<>();
         receiverChannels = new ConcurrentHashMap<>();
     }
@@ -47,12 +51,21 @@ public class Connection {
         return address;
     }
 
+    void setConnected() {
+        state = CONNECTED;
+        heartbeat.reset();
+    }
+
     void setState(ConnectionState state) {
         this.state = state;
     }
 
     public ConnectionState getState() {
         return state;
+    }
+
+    public DisconnectReason getDisconnectReason() {
+        return disconnectReason;
     }
 
     void setAwaitingConnectEstablished() {
@@ -72,7 +85,7 @@ public class Connection {
     }
 
     boolean isAwaitingConnectionEstablishedExpired() {
-        boolean isWaitingConnectionEstablishedExpired = Clock.getTimePassedSince(connectRequestReceivedTime) > config.getMaximumHandshakeWaitingTime();
+        boolean isWaitingConnectionEstablishedExpired = Clock.getTimePassedSince(connectRequestReceivedTime) > maximumHandshakeWaitingTime;
         if (state == AWAITING_CONNECT_ESTABLISHED && isWaitingConnectionEstablishedExpired) {
             return true;
         }
@@ -100,9 +113,19 @@ public class Connection {
         }
     }
 
+    void pingReceived() {
+        heartbeat.pingReceived();
+    }
+
+    void handleTimeout() {
+        disconnectReason = DisconnectReason.TIMEOUT;
+        setState(DISCONNECTED);
+    }
+
     void update() {
         receiverChannels.values().forEach(ReceiverChannel::update);
         senderChannels.values().forEach(SenderChannel::update);
+        heartbeat.update();
     }
 
     void handshake() {
@@ -113,6 +136,8 @@ public class Connection {
                 break;
             case AWAITING_CONNECT_ESTABLISHED:
                 handleAwaitingConnectEstablished();
+                break;
+            // should not be in any of the states bellow if it is a handshake.
             case DISCONNECTED:
             case CLOSED:
             case CONNECTED:

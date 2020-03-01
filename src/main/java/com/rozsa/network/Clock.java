@@ -8,4 +8,8 @@ class Clock {
     static long getTimePassedSince(long time) {
         return getCurrentTime() - time;
     }
+
+    static long secondsToMillis(float seconds) {
+        return (long)(seconds * 1000);
+    }
 }

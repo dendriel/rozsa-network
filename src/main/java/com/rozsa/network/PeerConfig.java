@@ -4,8 +4,9 @@ public class PeerConfig {
     private int port;
     private int maximumHandshakeAttempts;
     private long intervalBetweenHandshakes;
-    private long maximumHandshakeWaitingTime;
     private int receiveBufferSize;
+    private float pingInterval;
+    private float connectionTimeout;
 
     public PeerConfig() {
         this(0);
@@ -15,7 +16,9 @@ public class PeerConfig {
         this.port = port;
         maximumHandshakeAttempts = Constants.DefaultMaximumHandshakeAttempts;
         intervalBetweenHandshakes = Constants.DefaultIntervalBetweenHandshakesInMillis;
-        maximumHandshakeWaitingTime = maximumHandshakeAttempts * intervalBetweenHandshakes;
+
+        pingInterval = Constants.DefaultPingInterval;
+        connectionTimeout = Constants.DefaultConnectionTimeout;
 
         receiveBufferSize = Constants.DefaultReceiveBufferSize;
     }
@@ -44,15 +47,27 @@ public class PeerConfig {
         this.intervalBetweenHandshakes = intervalBetweenHandshakes;
     }
 
-    public long getMaximumHandshakeWaitingTime() {
-        return maximumHandshakeWaitingTime;
-    }
-
     public int getReceiveBufferSize() {
         return receiveBufferSize;
     }
 
     public void setReceiveBufferSize(int receiveBufferSize) {
         this.receiveBufferSize = receiveBufferSize;
+    }
+
+    public float getPingInterval() {
+        return pingInterval;
+    }
+
+    public void setPingInterval(float pingInterval) {
+        this.pingInterval = pingInterval;
+    }
+
+    public float getConnectionTimeout() {
+        return connectionTimeout;
+    }
+
+    public void setConnectionTimeout(float connectionTimeout) {
+        this.connectionTimeout = connectionTimeout;
     }
 }

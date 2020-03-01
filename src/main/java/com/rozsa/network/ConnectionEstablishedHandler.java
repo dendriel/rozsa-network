@@ -25,7 +25,7 @@ public class ConnectionEstablishedHandler implements IncomingMessageHandler {
             case AWAITING_CONNECT_RESPONSE:
             case AWAITING_CONNECT_ESTABLISHED:
             case SEND_CONNECT_REQUEST:
-                conn.setState(ConnectionState.CONNECTED);
+                conn.setConnected();
                 connHolder.promoteConnection(conn);
                 messageQueue.enqueue(new ConnectedMessage(conn));
                 break;

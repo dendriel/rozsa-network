@@ -39,7 +39,7 @@ class ConnectionHolder {
 
     void promoteConnection(Connection conn) {
         handshakes.remove(conn.getId());
-        conn.setState(ConnectionState.CONNECTED);
+        conn.setConnected();
         connections.put(conn.getId(), conn);
         Logger.info("Handshake %s has been promoted.", conn.getAddress());
     }

@@ -1,7 +1,7 @@
 package com.rozsa.network.message.outgoing;
 
-public class ConnectDenied extends OutgoingMessage {
-    public ConnectDenied() {
+public class ConnectDeniedMessage extends OutgoingMessage {
+    public ConnectDeniedMessage() {
         super(MessageType.CONNECTION_DENIED);
     }
 }

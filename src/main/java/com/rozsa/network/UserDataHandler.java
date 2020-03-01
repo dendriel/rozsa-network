@@ -30,7 +30,7 @@ public class UserDataHandler implements IncomingMessageHandler {
             case AWAITING_CONNECT_ESTABLISHED:
                 // received user data while waiting for connect established. Connect established message must got lost in
                 // its way. Consider this user data as a sign of connection established.
-                conn.setState(ConnectionState.CONNECTED);
+                conn.setConnected();
                 connHolder.promoteConnection(conn);
                 messageQueue.enqueue(new ConnectedMessage(conn));
                 // enqueue user data.

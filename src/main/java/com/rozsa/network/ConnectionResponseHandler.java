@@ -33,7 +33,7 @@ public class ConnectionResponseHandler implements IncomingMessageHandler {
         switch (conn.getState()) {
             case SEND_CONNECT_REQUEST:
             case AWAITING_CONNECT_RESPONSE:
-                conn.setState(ConnectionState.CONNECTED);
+                conn.setConnected();
                 connHolder.promoteConnection(conn);
                 messageQueue.enqueue(new ConnectedMessage(conn));
                 send(conn, new ConnectEstablishedMessage());
