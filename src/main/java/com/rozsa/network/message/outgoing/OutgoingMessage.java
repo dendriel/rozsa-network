@@ -10,9 +10,4 @@ public class OutgoingMessage extends Message {
     public OutgoingMessage(MessageType type, int size) {
         super(type, size+1);
     }
-
-    public byte[] serialize() {
-        data[dataIdx++] = type.getId();
-        return data;
-    }
 }

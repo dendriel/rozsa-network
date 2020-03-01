@@ -155,7 +155,7 @@ public class Connection {
         }
 
         ConnectRequestMessage connReq = new ConnectRequestMessage();
-        byte[] data = connReq.serialize();
+        byte[] data = connReq.getData();
         sender.send(address, data, connReq.getDataLength());
 
         state = AWAITING_CONNECT_RESPONSE;

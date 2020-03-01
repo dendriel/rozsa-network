@@ -20,11 +20,11 @@ public class ConnectionResponseHandler implements IncomingMessageHandler {
     }
 
     private void send(Connection conn, OutgoingMessage msg) {
-        packetSender.send(conn.getAddress(), msg.serialize(), msg.getDataLength());
+        packetSender.send(conn.getAddress(), msg.getData(), msg.getDataLength());
     }
 
     @Override
-    public void handle(Address addr, byte[] data, int dataIdx) {
+    public void handle(Address addr, byte[] data, int length) {
         Connection conn = connHolder.getHandshakeOrConnection(addr.getId());
         if (conn == null) {
             conn = connHolder.createAsIncomingHandshake(addr);

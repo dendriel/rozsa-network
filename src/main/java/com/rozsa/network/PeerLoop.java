@@ -11,7 +11,6 @@ public class PeerLoop extends Thread implements PacketSender {
     private final UDPSocket udpSocket;
     private final ConnectionHolder connHolder;
     private final IncomingMessagesQueue messageQueue;
-    private final PeerConfig config;
     private EnumMap<MessageType, IncomingMessageHandler> messageHandlers;
 
     private volatile boolean isRunning;
@@ -19,7 +18,6 @@ public class PeerLoop extends Thread implements PacketSender {
     PeerLoop(ConnectionHolder connHolder, IncomingMessagesQueue messageQueue, PeerConfig config) throws SocketException {
         this.connHolder = connHolder;
         this.messageQueue = messageQueue;
-        this.config = config;
         isRunning = true;
         initializeHandlers();
 
@@ -52,21 +50,17 @@ public class PeerLoop extends Thread implements PacketSender {
     private void loop() {
         receivePackets();
 
-        handleExpiredHandshakes();
-        handleHandshakes();
+        connHolder.getHandshakes().forEach(this::expireHandshakes);
+        connHolder.getHandshakes().forEach(Connection::handshake);
 
-        handleUpdates();
-        handleDisconnects();
+        connHolder.getConnections().forEach(Connection::update);
+        connHolder.getConnections().forEach(this::handleDisconnect);
     }
 
     // do not call outside peer loop thread to avoid UDPSocket concurrency.
     public void send(Address addr, byte[] data, int dataLen) {
         Logger.info("Sending " + MessageType.from(data[0]) + " to " + addr);
         udpSocket.send(addr.getNetAddress(), addr.getPort(), data, dataLen);
-    }
-
-    private void handleExpiredHandshakes() {
-        connHolder.getHandshakes().forEach(this::expireHandshakes);
     }
 
     private void expireHandshakes(Connection conn) {
@@ -78,13 +72,8 @@ public class PeerLoop extends Thread implements PacketSender {
 
         if (conn.isAwaitingConnectionEstablishedExpired()) {
             // may concur with user thread trying to connect to this address. [?!]
-            Logger.info("Handshake expired while waiting for connection established from %s.", conn);
             connHolder.removeHandshake(conn);
         }
-    }
-
-    private void handleDisconnects() {
-        connHolder.getConnections().forEach(this::handleDisconnect);
     }
 
     private void handleDisconnect(Connection conn) {
@@ -99,16 +88,8 @@ public class PeerLoop extends Thread implements PacketSender {
 
         if (reason == DisconnectReason.LOCAL_CLOSE) {
             ConnectionClosedMessage closedMessage = new ConnectionClosedMessage();
-            send(conn.getAddress(), closedMessage.serialize(), closedMessage.getDataLength());
+            send(conn.getAddress(), closedMessage.getData(), closedMessage.getDataLength());
         }
-    }
-
-    private void handleHandshakes() {
-        connHolder.getHandshakes().forEach(Connection::handshake);
-    }
-
-    private void handleUpdates() {
-        connHolder.getConnections().forEach(Connection::update);
     }
 
     private void receivePackets() {
@@ -120,12 +101,23 @@ public class PeerLoop extends Thread implements PacketSender {
 
         Address addr = Address.from(packet.getAddress(), packet.getPort());
         int dataIdx = 0;
-        byte[] data = packet.getData();
-        MessageType type = MessageType.from(data[dataIdx++]);
+        byte[] buf = packet.getData();
+        int length = packet.getLength();
+        if (length <= 0) {
+            Logger.warn("Received invalid packet from %s.", addr);
+            return;
+        }
+
+        // deserialize header
+        MessageType type = MessageType.from(buf[dataIdx++]);
+
+        // deserialize data
+        byte[] data = new byte[length - dataIdx];
+        System.arraycopy(buf, dataIdx, data, 0, data.length);
 
         Logger.info("Received %s %s", type, addr);
 
         IncomingMessageHandler handler = messageHandlers.getOrDefault(type, new UnknownMessageHandler());
-        handler.handle(addr, data, dataIdx);
+        handler.handle(addr, data, data.length);
     }
 }

@@ -10,6 +10,7 @@ public abstract class Message {
     public Message(MessageType type, int size) {
         this.type = type;
         data = new byte[size];
+        data[dataIdx++] = type.getId();
     }
 
     public MessageType getType() {

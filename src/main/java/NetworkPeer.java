@@ -6,7 +6,7 @@ import com.rozsa.network.message.incoming.IncomingMessage;
 import com.rozsa.network.Peer;
 import com.rozsa.network.PeerConfig;
 import com.rozsa.network.message.incoming.IncomingMessageType;
-import com.rozsa.network.message.outgoing.UserDataMessage;
+import com.rozsa.network.message.outgoing.OutgoingUserDataMessage;
 
 import java.io.NotActiveException;
 import java.net.SocketException;
@@ -32,7 +32,6 @@ class NetworkPeer {
         peer.connect("localhost", targetPort);
         sendMsg = true;
         isClient = true;
-        timeSinceDataMsg = System.currentTimeMillis();
     }
 
     private void loop() {
@@ -53,24 +52,14 @@ class NetworkPeer {
     boolean isClient;
     boolean sendMsg;
     Connection peerConn = null;
-    long timeSinceDataMsg = 0;
-    boolean disconnected = false;
 
     private void recvIncomingMessages() throws InterruptedException {
-
-        if (isClient && !disconnected && (System.currentTimeMillis() - timeSinceDataMsg) > 3000) {
-            System.out.printf("Disconnect peer\n");
-            disconnected = true;
-            peer.disconnect(peerConn);
-        }
 
         IncomingMessage incomingMsg = peer.read();
         if (incomingMsg == null) {
             Thread.sleep(1);
             return;
         }
-
-//        Logger.info("INCOMING " + incomingMsg);
 
         if (incomingMsg.getType() == IncomingMessageType.CONNECTED) {
             peerConn = incomingMsg.getConnection();
@@ -80,11 +69,16 @@ class NetworkPeer {
             System.out.printf("Disconnected from %s. Reason: %s\n", incomingMsg.getConnection(), disc.getReason());
             return;
         }
+        else if (incomingMsg.getType() == IncomingMessageType.USER_DATA) {
+            System.out.println("Received message \"" + new String(incomingMsg.getData()) + "\"");
+
+        }
 
         if (sendMsg) {
             sendMsg = false;
-            timeSinceDataMsg = System.currentTimeMillis();
-            UserDataMessage outgoingMsg = new UserDataMessage(incomingMsg.getDataLen());
+            String myName = "Vitor Rozsa";
+            OutgoingUserDataMessage outgoingMsg = new OutgoingUserDataMessage(myName.length());
+            outgoingMsg.writeString(myName);
             peer.sendMessage(peerConn, outgoingMsg, DeliveryMethod.UNRELIABLE);
         }
     }

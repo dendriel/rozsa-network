@@ -26,7 +26,7 @@ public class SenderChannel extends BaseChannel {
     public void update() {
         while(!outgoingMessages.isEmpty()) {
             OutgoingMessage msg = outgoingMessages.poll();
-            sender.send(addr, msg.serialize(), msg.getDataLength());
+            sender.send(addr, msg.getData(), msg.getDataLength());
         }
     }
 }

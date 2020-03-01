@@ -5,18 +5,18 @@ import com.rozsa.network.Connection;
 public class IncomingMessage {
     private final IncomingMessageType type;
     private final byte[] data;
-    private final int dataLen;
+    private final int length;
     private Connection connection;
 
     IncomingMessage(IncomingMessageType type, Connection connection) {
         this(type, connection, null, 0);
     }
 
-    IncomingMessage(IncomingMessageType type, Connection connection, byte[] data, int dataLen) {
+    IncomingMessage(IncomingMessageType type, Connection connection, byte[] data, int length) {
         this.type = type;
         this.connection = connection;
         this.data = data;
-        this.dataLen = dataLen;
+        this.length = length;
     }
 
     public Connection getConnection() {
@@ -31,8 +31,8 @@ public class IncomingMessage {
         return data;
     }
 
-    public int getDataLen() {
-        return dataLen;
+    public int getLength() {
+        return length;
     }
 
     @Override

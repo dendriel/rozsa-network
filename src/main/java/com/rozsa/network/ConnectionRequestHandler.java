@@ -21,7 +21,7 @@ public class ConnectionRequestHandler implements IncomingMessageHandler {
     }
 
     private void send(Connection conn, OutgoingMessage msg) {
-        packetSender.send(conn.getAddress(), msg.serialize(), msg.getDataLength());
+        packetSender.send(conn.getAddress(), msg.getData(), msg.getDataLength());
     }
 
     @Override

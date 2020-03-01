@@ -1,6 +1,7 @@
 package com.rozsa.network;
 
 import com.rozsa.network.message.incoming.ConnectedMessage;
+import com.rozsa.network.message.incoming.IncomingUserDataMessage;
 
 public class UserDataHandler implements IncomingMessageHandler {
     private final ConnectionHolder connHolder;
@@ -15,7 +16,7 @@ public class UserDataHandler implements IncomingMessageHandler {
     }
 
     @Override
-    public void handle(Address addr, byte[] data, int dataIdx) {
+    public void handle(Address addr, byte[] data, int length) {
         Connection conn = connHolder.getHandshakeOrConnection(addr.getId());
         if (conn == null) {
             Logger.warn("Received user data from %s but handshake nor connection doesn't even exist!.", addr);
@@ -23,17 +24,16 @@ public class UserDataHandler implements IncomingMessageHandler {
         }
 
         switch (conn.getState()) {
-            case CONNECTED:
-                Logger.info("Received user data from %s.", conn);
-                // enqueue user data.
-                break;
             case AWAITING_CONNECT_ESTABLISHED:
                 // received user data while waiting for connect established. Connect established message must got lost in
                 // its way. Consider this user data as a sign of connection established.
                 conn.setConnected();
                 connHolder.promoteConnection(conn);
                 messageQueue.enqueue(new ConnectedMessage(conn));
-                // enqueue user data.
+
+            case CONNECTED:
+                IncomingUserDataMessage dataMessage = new IncomingUserDataMessage(conn, data, length);
+                messageQueue.enqueue(dataMessage);
                 break;
             case AWAITING_CONNECT_RESPONSE:
             case SEND_CONNECT_REQUEST:

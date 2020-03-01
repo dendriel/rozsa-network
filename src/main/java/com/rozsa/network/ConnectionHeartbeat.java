@@ -40,7 +40,7 @@ class ConnectionHeartbeat {
 
     private void sendPing() {
         PingMessage ping = new PingMessage();
-        sender.send(conn.getAddress(), ping.serialize(), ping.getDataLength());
+        sender.send(conn.getAddress(), ping.getData(), ping.getDataLength());
     }
 
     void pingReceived() {
