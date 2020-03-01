@@ -34,7 +34,6 @@ public class ConnectionEstablishedHandler implements IncomingMessageHandler {
                 break;
             case DISCONNECTED:
                 Logger.info("Didn't approved connection with %s.", conn);
-            case CLOSED:
             default:
                 break;
         }

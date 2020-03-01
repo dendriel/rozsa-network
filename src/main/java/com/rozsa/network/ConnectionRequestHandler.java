@@ -51,8 +51,6 @@ public class ConnectionRequestHandler implements IncomingMessageHandler {
                 Logger.info("Already connected to %s. Resend connect response.", conn);
                 send(conn, new ConnectEstablishedMessage());
                 break;
-            case CLOSED:
-                Logger.info("Already closed connection with %s. Send closed response.", conn);
             default:
                 break;
         }

@@ -64,8 +64,12 @@ public class Connection {
         return state;
     }
 
-    public DisconnectReason getDisconnectReason() {
+    DisconnectReason getDisconnectReason() {
         return disconnectReason;
+    }
+
+    void setDisconnectReason(DisconnectReason disconnectReason) {
+        this.disconnectReason = disconnectReason;
     }
 
     void setAwaitingConnectEstablished() {
@@ -139,7 +143,6 @@ public class Connection {
                 break;
             // should not be in any of the states bellow if it is a handshake.
             case DISCONNECTED:
-            case CLOSED:
             case CONNECTED:
             default:
                 break;

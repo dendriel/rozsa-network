@@ -43,7 +43,6 @@ public class ConnectionResponseHandler implements IncomingMessageHandler {
                 send(conn, new ConnectEstablishedMessage());
                 break;
             case DISCONNECTED:
-            case CLOSED:
             default:
                 break;
         }

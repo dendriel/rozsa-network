@@ -32,6 +32,7 @@ public class PeerLoop extends Thread implements PacketSender {
         messageHandlers.put(MessageType.CONNECTION_RESPONSE, new ConnectionResponseHandler(connHolder, messageQueue, this));
         messageHandlers.put(MessageType.CONNECTION_ESTABLISHED, new ConnectionEstablishedHandler(connHolder, messageQueue));
         messageHandlers.put(MessageType.CONNECTION_DENIED, new ConnectionDeniedHandler());
+        messageHandlers.put(MessageType.CONNECTION_CLOSED, new ConnectionClosedHandler(connHolder));
         messageHandlers.put(MessageType.PING, new PingMessageHandler(connHolder));
         messageHandlers.put(MessageType.USER_DATA, new UserDataHandler(connHolder, messageQueue));
         messageHandlers.put(MessageType.UNKNOWN, new UnknownMessageHandler());
@@ -49,15 +50,16 @@ public class PeerLoop extends Thread implements PacketSender {
     }
 
     private void loop() {
+        receivePackets();
+
         handleExpiredHandshakes();
         handleHandshakes();
 
         handleUpdates();
         handleDisconnects();
-
-        receivePackets();
     }
 
+    // do not call outside peer loop thread to avoid UDPSocket concurrency.
     public void send(Address addr, byte[] data, int dataLen) {
         Logger.info("Sending " + MessageType.from(data[0]) + " to " + addr);
         udpSocket.send(addr.getNetAddress(), addr.getPort(), data, dataLen);
@@ -91,8 +93,14 @@ public class PeerLoop extends Thread implements PacketSender {
         }
         connHolder.removeConnection(conn);
 
-        DisconnectedMessage disconnectedMessage = new DisconnectedMessage(conn, conn.getDisconnectReason());
+        DisconnectReason reason = conn.getDisconnectReason();
+        DisconnectedMessage disconnectedMessage = new DisconnectedMessage(conn, reason);
         messageQueue.enqueue(disconnectedMessage);
+
+        if (reason == DisconnectReason.LOCAL_CLOSE) {
+            ConnectionClosedMessage closedMessage = new ConnectionClosedMessage();
+            send(conn.getAddress(), closedMessage.serialize(), closedMessage.getDataLength());
+        }
     }
 
     private void handleHandshakes() {

@@ -39,8 +39,6 @@ public class UserDataHandler implements IncomingMessageHandler {
             case SEND_CONNECT_REQUEST:
             case DISCONNECTED:
                 Logger.warn("Received user data from %s but isn't connected yet.", conn);
-            case CLOSED:
-                Logger.warn("Received user data from %s but connection is closed!.", addr);
             default:
                 break;
         }

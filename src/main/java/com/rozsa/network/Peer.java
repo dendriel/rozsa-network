@@ -66,6 +66,11 @@ public class Peer {
         return conn;
     }
 
+    public void disconnect(Connection conn) {
+        conn.setDisconnectReason(DisconnectReason.LOCAL_CLOSE);
+        conn.setState(DISCONNECTED);
+    }
+
     public void sendMessage(Connection conn, OutgoingMessage msg, DeliveryMethod deliveryMethod) {
         conn.enqueueMessage(msg, deliveryMethod);
     }

@@ -6,5 +6,4 @@ public enum ConnectionState {
     AWAITING_CONNECT_ESTABLISHED,
     CONNECTED,
     DISCONNECTED,
-    CLOSED,
 }
