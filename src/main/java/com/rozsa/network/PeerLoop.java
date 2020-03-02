@@ -41,8 +41,8 @@ public class PeerLoop extends Thread implements PacketSender {
         while (isRunning) {
             try {
                 loop();
-                Thread.sleep(1);
-            } catch (InterruptedException e) {
+//                Thread.sleep(1);
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }

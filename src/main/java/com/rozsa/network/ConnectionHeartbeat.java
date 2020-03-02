@@ -21,14 +21,14 @@ class ConnectionHeartbeat {
         this.conn = conn;
         this.sender = sender;
 
-        this.pingInterval = Clock.secondsToMillis(config.getPingInterval());
-        this.connectionTimeout = Clock.secondsToMillis(config.getConnectionTimeout());
+        this.pingInterval = Clock.secondsToNanos(config.getPingInterval());
+        this.connectionTimeout = Clock.secondsToNanos(config.getConnectionTimeout());
         currSeqNumber = 0;
     }
 
     void reset() {
-        lastReceivedPingTime = Clock.getCurrentTime();
-        lastSentPingTime = Clock.getCurrentTime();
+        lastReceivedPingTime = Clock.getCurrentTimeInNanos();
+        lastSentPingTime = Clock.getCurrentTimeInNanos();
     }
 
     void update() {
@@ -49,14 +49,14 @@ class ConnectionHeartbeat {
     }
 
     private void sendPing() {
-        lastSentPingTime = Clock.getCurrentTime();
+        lastSentPingTime = Clock.getCurrentTimeInNanos();
         lastPingSentSeqNumber = currSeqNumber++;
         PingMessage ping = new PingMessage(lastPingSentSeqNumber);
         sender.send(conn.getAddress(), ping.getData(), ping.getDataLength());
     }
 
     void pingReceived(short seqNumber) {
-        lastReceivedPingTime = Clock.getCurrentTime();
+        lastReceivedPingTime = Clock.getCurrentTimeInNanos();
         sendPong(seqNumber);
     }
 
@@ -72,18 +72,18 @@ class ConnectionHeartbeat {
             return;
         }
 
-        long lastRtt = Clock.getTimePassedSince(lastSentPingTime);
+        long lastRtt = Clock.getTimePassedSinceInNanos(lastSentPingTime);
         sRtt = (long)(0.875 * sRtt + lastRtt * 0.125);
-        Logger.info("New SRTT %d - lastRtt %d", sRtt, lastRtt);
+        Logger.info("New SRTT %dus - lastRtt %dus", Clock.nanosToMicros(sRtt), Clock.nanosToMicros(lastRtt));
     }
 
     private boolean isTimeout() {
-        long timeSinceLastPingReceived = Clock.getTimePassedSince(lastReceivedPingTime);
+        long timeSinceLastPingReceived = Clock.getTimePassedSinceInNanos(lastReceivedPingTime);
         return timeSinceLastPingReceived > connectionTimeout;
     }
 
     private boolean isTimeToSendPing() {
-        long timeSinceLastPingSent = Clock.getTimePassedSince(lastSentPingTime);
+        long timeSinceLastPingSent = Clock.getTimePassedSinceInNanos(lastSentPingTime);
         return timeSinceLastPingSent > pingInterval;
     }
 }
