@@ -1,6 +1,7 @@
 package com.rozsa.network;
 
 import com.rozsa.network.message.outgoing.PingMessage;
+import com.rozsa.network.message.outgoing.PongMessage;
 
 class ConnectionHeartbeat {
     private Connection conn;
@@ -11,12 +12,18 @@ class ConnectionHeartbeat {
     private long lastReceivedPingTime;
     private long lastSentPingTime;
 
+    private short lastPingSentSeqNumber;
+    private short currSeqNumber;
+
+    private long sRtt;
+
     ConnectionHeartbeat(PeerConfig config, Connection conn, PacketSender sender) {
         this.conn = conn;
         this.sender = sender;
 
         this.pingInterval = Clock.secondsToMillis(config.getPingInterval());
         this.connectionTimeout = Clock.secondsToMillis(config.getConnectionTimeout());
+        currSeqNumber = 0;
     }
 
     void reset() {
@@ -34,17 +41,40 @@ class ConnectionHeartbeat {
             return;
         }
 
-        lastSentPingTime = Clock.getCurrentTime();
         sendPing();
     }
 
+    public long getSRtt() {
+        return sRtt;
+    }
+
     private void sendPing() {
-        PingMessage ping = new PingMessage();
+        lastSentPingTime = Clock.getCurrentTime();
+        lastPingSentSeqNumber = currSeqNumber++;
+        PingMessage ping = new PingMessage(lastPingSentSeqNumber);
         sender.send(conn.getAddress(), ping.getData(), ping.getDataLength());
     }
 
-    void pingReceived() {
+    void pingReceived(short seqNumber) {
         lastReceivedPingTime = Clock.getCurrentTime();
+        sendPong(seqNumber);
+    }
+
+    private void sendPong(short seqNumber) {
+        PongMessage pong = new PongMessage(seqNumber);
+        sender.send(conn.getAddress(), pong.getData(), pong.getDataLength());
+    }
+
+    void pongReceived(short seqNumber) {
+        if (lastPingSentSeqNumber != seqNumber) {
+            // pong must be an outlier.
+            Logger.warn("Unexpected pong sequence number %d. Expected %d", seqNumber, lastPingSentSeqNumber);
+            return;
+        }
+
+        long lastRtt = Clock.getTimePassedSince(lastSentPingTime);
+        sRtt = (long)(0.875 * sRtt + lastRtt * 0.125);
+        Logger.info("New SRTT %d - lastRtt %d", sRtt, lastRtt);
     }
 
     private boolean isTimeout() {

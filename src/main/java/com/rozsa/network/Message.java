@@ -7,10 +7,19 @@ public abstract class Message {
     protected byte[] data;
     protected int dataIdx = 0;
 
-    public Message(MessageType type, int size) {
+    public Message(MessageType type, int size, short seqNumber) {
         this.type = type;
         data = new byte[size];
+
         data[dataIdx++] = type.getId();
+        data[dataIdx++] = (byte)(seqNumber & 0xFF);
+        data[dataIdx++] = (byte)((seqNumber >> 8) & 0xFF);
+    }
+
+    // maybe not public
+    public void writeSeqNumber(short seqNumber) {
+        data[1] = (byte)(seqNumber & 0xFF);
+        data[2] = (byte)((seqNumber >> 8) & 0xFF);
     }
 
     public MessageType getType() {

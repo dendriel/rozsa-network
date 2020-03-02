@@ -14,13 +14,13 @@ public class PeerConfig {
 
     public PeerConfig(int port) {
         this.port = port;
-        maximumHandshakeAttempts = Constants.DefaultMaximumHandshakeAttempts;
-        intervalBetweenHandshakes = Constants.DefaultIntervalBetweenHandshakesInMillis;
+        maximumHandshakeAttempts = NetConstants.DefaultMaximumHandshakeAttempts;
+        intervalBetweenHandshakes = NetConstants.DefaultIntervalBetweenHandshakesInMillis;
 
-        pingInterval = Constants.DefaultPingInterval;
-        connectionTimeout = Constants.DefaultConnectionTimeout;
+        pingInterval = NetConstants.DefaultPingInterval;
+        connectionTimeout = NetConstants.DefaultConnectionTimeout;
 
-        receiveBufferSize = Constants.DefaultReceiveBufferSize;
+        receiveBufferSize = NetConstants.DefaultReceiveBufferSize;
     }
 
     public int getPort() {

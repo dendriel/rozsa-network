@@ -2,7 +2,7 @@ package com.rozsa.network.message.outgoing;
 
 public class OutgoingUserDataMessage extends OutgoingMessage {
     public OutgoingUserDataMessage(int size) {
-        super(MessageType.USER_DATA, size);
+        super(MessageType.USER_DATA, size, (short)0);
     }
 
     public void writeString(String value) {

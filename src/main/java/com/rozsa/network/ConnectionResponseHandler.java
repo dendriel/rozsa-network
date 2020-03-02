@@ -24,7 +24,7 @@ public class ConnectionResponseHandler implements IncomingMessageHandler {
     }
 
     @Override
-    public void handle(Address addr, byte[] data, int length) {
+    public void handle(Address addr, byte[] data, int length, short seqNumber) {
         Connection conn = connHolder.getHandshakeOrConnection(addr.getId());
         if (conn == null) {
             conn = connHolder.createAsIncomingHandshake(addr);

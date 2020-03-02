@@ -26,14 +26,15 @@ public class PeerLoop extends Thread implements PacketSender {
 
     private void initializeHandlers() {
         messageHandlers = new EnumMap<>(MessageType.class);
+        messageHandlers.put(MessageType.UNKNOWN, new UnknownMessageHandler());
         messageHandlers.put(MessageType.CONNECTION_REQUEST, new ConnectionRequestHandler(connHolder, messageQueue, this));
         messageHandlers.put(MessageType.CONNECTION_RESPONSE, new ConnectionResponseHandler(connHolder, messageQueue, this));
         messageHandlers.put(MessageType.CONNECTION_ESTABLISHED, new ConnectionEstablishedHandler(connHolder, messageQueue));
         messageHandlers.put(MessageType.CONNECTION_DENIED, new ConnectionDeniedHandler());
         messageHandlers.put(MessageType.CONNECTION_CLOSED, new ConnectionClosedHandler(connHolder));
         messageHandlers.put(MessageType.PING, new PingMessageHandler(connHolder));
+        messageHandlers.put(MessageType.PONG, new PongMessageHandler(connHolder));
         messageHandlers.put(MessageType.USER_DATA, new UserDataHandler(connHolder, messageQueue));
-        messageHandlers.put(MessageType.UNKNOWN, new UnknownMessageHandler());
     }
 
     public void run() {
@@ -110,6 +111,9 @@ public class PeerLoop extends Thread implements PacketSender {
 
         // deserialize header
         MessageType type = MessageType.from(buf[dataIdx++]);
+        int seqNumber = (buf[dataIdx++] & 0xFF);
+        seqNumber = (seqNumber | (buf[dataIdx++] & 0xFF) << 8);
+//        Logger.info("SEQ %d", seqNumber);
 
         // deserialize data
         byte[] data = new byte[length - dataIdx];
@@ -118,6 +122,6 @@ public class PeerLoop extends Thread implements PacketSender {
         Logger.info("Received %s %s", type, addr);
 
         IncomingMessageHandler handler = messageHandlers.getOrDefault(type, new UnknownMessageHandler());
-        handler.handle(addr, data, data.length);
+        handler.handle(addr, data, data.length, (short)seqNumber);
     }
 }

@@ -8,7 +8,7 @@ public class Main {
         int clientPort = 8989;
         boolean isServer = false;
 
-        isServer = true;
+//        isServer = true;
 
         if (isServer) {
             NetworkPeer server = new NetworkPeer(serverPort);

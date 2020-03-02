@@ -51,6 +51,10 @@ public class Connection {
         return address;
     }
 
+    public long getSRtt() {
+        return heartbeat.getSRtt();
+    }
+
     void setConnected() {
         state = CONNECTED;
         heartbeat.reset();
@@ -117,8 +121,12 @@ public class Connection {
         }
     }
 
-    void pingReceived() {
-        heartbeat.pingReceived();
+    void pingReceived(short seqNumber) {
+        heartbeat.pingReceived(seqNumber);
+    }
+
+    void pongReceived(short seqNumber) {
+        heartbeat.pongReceived(seqNumber);
     }
 
     void handleTimeout() {

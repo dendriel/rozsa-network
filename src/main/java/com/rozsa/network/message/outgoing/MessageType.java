@@ -10,7 +10,8 @@ public enum MessageType {
     CONNECTION_DENIED(4),
     CONNECTION_CLOSED(5),
     PING(6),
-    USER_DATA(7),
+    PONG(7),
+    USER_DATA(8),
     ;
 
     private final byte id;
@@ -34,6 +35,7 @@ public enum MessageType {
         idToTypeMapper.put(CONNECTION_DENIED.getId(), CONNECTION_DENIED);
         idToTypeMapper.put(CONNECTION_CLOSED.getId(), CONNECTION_CLOSED);
         idToTypeMapper.put(PING.getId(), PING);
+        idToTypeMapper.put(PONG.getId(), PONG);
         idToTypeMapper.put(USER_DATA.getId(), USER_DATA);
     }
 
