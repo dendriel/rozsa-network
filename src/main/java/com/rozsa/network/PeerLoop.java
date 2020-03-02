@@ -60,7 +60,7 @@ public class PeerLoop extends Thread implements PacketSender {
 
     // do not call outside peer loop thread to avoid UDPSocket concurrency.
     public void send(Address addr, byte[] data, int dataLen) {
-        Logger.info("Sending " + MessageType.from(data[0]) + " to " + addr);
+        Logger.debug("Sending " + MessageType.from(data[0]) + " to " + addr);
         udpSocket.send(addr.getNetAddress(), addr.getPort(), data, dataLen);
     }
 
@@ -105,7 +105,6 @@ public class PeerLoop extends Thread implements PacketSender {
         byte[] buf = packet.getData();
         int length = packet.getLength();
         if (length <= 0) {
-            Logger.warn("Received invalid packet from %s.", addr);
             return;
         }
 
@@ -118,8 +117,6 @@ public class PeerLoop extends Thread implements PacketSender {
         // deserialize data
         byte[] data = new byte[length - dataIdx];
         System.arraycopy(buf, dataIdx, data, 0, data.length);
-
-        Logger.info("Received %s %s", type, addr);
 
         IncomingMessageHandler handler = messageHandlers.getOrDefault(type, new UnknownMessageHandler());
         handler.handle(addr, data, data.length, (short)seqNumber);

@@ -39,7 +39,7 @@ public class ConnectionResponseHandler implements IncomingMessageHandler {
                 send(conn, new ConnectEstablishedMessage());
                 break;
             case CONNECTED:
-                Logger.info("Already connected to %s. Resend connect established.", conn);
+                Logger.debug("Already connected to %s. Resend connect established.", conn);
                 send(conn, new ConnectEstablishedMessage());
                 break;
             case DISCONNECTED:

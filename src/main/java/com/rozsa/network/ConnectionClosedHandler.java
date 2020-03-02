@@ -26,7 +26,7 @@ public class ConnectionClosedHandler implements IncomingMessageHandler {
                 conn.setState(ConnectionState.DISCONNECTED);
                 break;
             case DISCONNECTED:
-                Logger.info("Already disconnected from %s.", conn);
+                Logger.debug("Already disconnected from %s.", conn);
             default:
                 break;
         }

@@ -116,7 +116,7 @@ public class Connection {
             case UNRELIABLE:
                 return new UnreliableSenderChannel(address, sender);
             default:
-                Logger.info("Unhandled delivery method!! " + deliveryMethod);
+                Logger.debug("Unhandled delivery method!! " + deliveryMethod);
                 return new UnreliableSenderChannel(address, sender);
         }
     }

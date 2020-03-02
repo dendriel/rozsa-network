@@ -32,4 +32,15 @@ class Clock {
     static long nanosToMicros(long nanos) {
         return nanos / 1000;
     }
+
+    static long debugTime;
+
+    static void startTimerDebug() {
+        debugTime = getCurrentTimeInNanos();
+    }
+
+    static void markTimerDebug(String msg) {
+        long timePassed = getTimePassedSinceInNanos(debugTime);
+        System.out.printf("%s at %dus\n", msg, nanosToMicros(timePassed));
+    }
 }

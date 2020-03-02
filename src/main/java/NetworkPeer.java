@@ -25,7 +25,6 @@ class NetworkPeer {
 
     public void start() {
         new Thread(this::loop).start();
-        Logger.info("Peer started at port " + port);
     }
 
     public void connect(int targetPort) throws NotActiveException, UnknownHostException {

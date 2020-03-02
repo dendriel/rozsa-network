@@ -45,7 +45,7 @@ class ConnectionHeartbeat {
     }
 
     public long getSRtt() {
-        return sRtt;
+        return Clock.nanosToMillis(sRtt);
     }
 
     private void sendPing() {

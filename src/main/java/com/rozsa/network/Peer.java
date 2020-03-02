@@ -48,7 +48,7 @@ public class Peer {
         Connection conn = connHolder.getConnection(addr.getId());
         if (conn != null) {
             if (conn.getState() == CONNECTED) {
-                Logger.info("Already connected to %s:%d", ip, port);
+                Logger.debug("Already connected to %s:%d", ip, port);
                 return conn;
             }
             // remove conn so we can start fresh from handshake.
