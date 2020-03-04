@@ -1,5 +1,6 @@
 package com.rozsa.network;
 
+//TODO: add interface.
 public class PeerConfig {
     private int port;
     private int maximumHandshakeAttempts;
