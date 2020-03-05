@@ -1,6 +1,6 @@
 package com.rozsa.network;
 
-import com.rozsa.network.message.incoming.IncomingMessage;
+import com.rozsa.network.message.IncomingMessage;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 

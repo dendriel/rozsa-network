@@ -1,9 +1,7 @@
 package com.rozsa.network;
 
 import com.rozsa.network.channel.DeliveryMethod;
-import com.rozsa.network.message.incoming.ConnectedMessage;
-import com.rozsa.network.message.outgoing.ConnectEstablishedMessage;
-import com.rozsa.network.message.outgoing.OutgoingMessage;
+import com.rozsa.network.message.ConnectedMessage;
 
 public class ConnectionResponseHandler implements IncomingMessageHandler {
     private final ConnectionHolder connHolder;
@@ -20,10 +18,6 @@ public class ConnectionResponseHandler implements IncomingMessageHandler {
         this. packetSender = packetSender;
     }
 
-    private void send(Connection conn, OutgoingMessage msg) {
-        packetSender.send(conn.getAddress(), msg.getData(), msg.getDataLength());
-    }
-
     @Override
     public void handle(Address addr, DeliveryMethod deliveryMethod, short seqNumber, byte[] data, int length) {
         Connection conn = connHolder.getHandshakeOrConnection(addr.getId());
@@ -31,17 +25,20 @@ public class ConnectionResponseHandler implements IncomingMessageHandler {
             conn = connHolder.createAsIncomingHandshake(addr);
         }
 
+        byte[] buf;
         switch (conn.getState()) {
             case SEND_CONNECT_REQUEST:
             case AWAITING_CONNECT_RESPONSE:
                 conn.setConnected();
                 connHolder.promoteConnection(conn);
                 incomingMessages.enqueue(new ConnectedMessage(conn));
-                send(conn, new ConnectEstablishedMessage());
+                buf = MessageSerializer.serialize(MessageType.CONNECTION_ESTABLISHED);
+                packetSender.send(conn.getAddress(), buf, buf.length);
                 break;
             case CONNECTED:
                 Logger.debug("Already connected to %s. Resend connect established.", conn);
-                send(conn, new ConnectEstablishedMessage());
+                buf = MessageSerializer.serialize(MessageType.CONNECTION_ESTABLISHED);
+                packetSender.send(conn.getAddress(), buf, buf.length);
                 break;
             case DISCONNECTED:
             default:

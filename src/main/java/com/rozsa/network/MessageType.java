@@ -1,4 +1,4 @@
-package com.rozsa.network.message.outgoing;
+package com.rozsa.network;
 
 import java.util.HashMap;
 
@@ -20,7 +20,7 @@ public enum MessageType {
         this.id = (byte)id;
     }
 
-    public byte getId() {
+    byte getId() {
         return id;
     }
 
@@ -39,7 +39,7 @@ public enum MessageType {
         idToTypeMapper.put(USER_DATA.getId(), USER_DATA);
     }
 
-    public static MessageType from(byte id) {
+    static MessageType from(byte id) {
         if (!idToTypeMapper.containsKey(id)) {
             return UNKNOWN;
         }

@@ -1,8 +1,8 @@
-package com.rozsa.network.message.incoming;
+package com.rozsa.network.message;
 
 import com.rozsa.network.Connection;
 
-public class PingUpdatedMessage extends IncomingMessage {
+public final class PingUpdatedMessage extends IncomingMessage {
     private long ping;
 
     public PingUpdatedMessage(Connection connection, long ping) {

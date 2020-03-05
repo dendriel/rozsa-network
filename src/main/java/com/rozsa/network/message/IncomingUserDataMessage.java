@@ -1,8 +1,8 @@
-package com.rozsa.network.message.incoming;
+package com.rozsa.network.message;
 
 import com.rozsa.network.Connection;
 
-public class IncomingUserDataMessage extends IncomingMessage {
+public final class IncomingUserDataMessage extends IncomingMessage {
     public IncomingUserDataMessage(Connection connection, byte[] data, int length) {
         super(IncomingMessageType.USER_DATA, connection, data, length);
     }

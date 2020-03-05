@@ -2,8 +2,7 @@ package com.rozsa.network.channel;
 
 import com.rozsa.network.IncomingMessagesQueue;
 import com.rozsa.network.Logger;
-import com.rozsa.network.PacketSender;
-import com.rozsa.network.message.incoming.IncomingMessage;
+import com.rozsa.network.message.IncomingMessage;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 

@@ -1,4 +1,4 @@
-package com.rozsa.network.message.incoming;
+package com.rozsa.network.message;
 
 public enum IncomingMessageType {
     CONNECTED,

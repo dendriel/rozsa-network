@@ -1,7 +1,5 @@
 package com.rozsa.network.channel;
 
-import com.rozsa.network.message.outgoing.MessageType;
-
 import java.util.HashMap;
 
 public enum DeliveryMethod {

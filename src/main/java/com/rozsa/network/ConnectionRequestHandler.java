@@ -1,10 +1,7 @@
 package com.rozsa.network;
 
 import com.rozsa.network.channel.DeliveryMethod;
-import com.rozsa.network.message.incoming.ConnectedMessage;
-import com.rozsa.network.message.outgoing.ConnectEstablishedMessage;
-import com.rozsa.network.message.outgoing.ConnectResponseMessage;
-import com.rozsa.network.message.outgoing.OutgoingMessage;
+import com.rozsa.network.message.ConnectedMessage;
 
 public class ConnectionRequestHandler implements IncomingMessageHandler {
     private final ConnectionHolder connHolder;
@@ -21,10 +18,6 @@ public class ConnectionRequestHandler implements IncomingMessageHandler {
         this. packetSender = packetSender;
     }
 
-    private void send(Connection conn, OutgoingMessage msg) {
-        packetSender.send(conn.getAddress(), msg.getData(), msg.getDataLength());
-    }
-
     @Override
     public void handle(Address addr, DeliveryMethod deliveryMethod, short seqNumber, byte[] data, int length) {
         Connection conn = connHolder.getHandshake(addr.getId());
@@ -32,11 +25,13 @@ public class ConnectionRequestHandler implements IncomingMessageHandler {
             conn = connHolder.createAsIncomingHandshake(addr);
         }
 
+        byte[] buf;
         switch (conn.getState()) {
             case DISCONNECTED:
                 // if disconnected, send connect response and await for connect established.
                 conn.setAwaitingConnectEstablished();
-                send(conn, new ConnectResponseMessage());
+                buf = MessageSerializer.serialize(MessageType.CONNECTION_RESPONSE);
+                packetSender.send(conn.getAddress(), buf, buf.length);
                 break;
 
             case SEND_CONNECT_REQUEST:
@@ -45,12 +40,14 @@ public class ConnectionRequestHandler implements IncomingMessageHandler {
                 // if received connect request while sending connect request itself, establish the connection right away.
                 incomingMessages.enqueue(new ConnectedMessage(conn));
                 connHolder.promoteConnection(conn);
-                send(conn, new ConnectEstablishedMessage());
+                buf = MessageSerializer.serialize(MessageType.CONNECTION_ESTABLISHED);
+                packetSender.send(conn.getAddress(), buf, buf.length);
                 break;
 
             case CONNECTED:
                 Logger.debug("Already connected to %s. Resend connect response.", conn);
-                send(conn, new ConnectEstablishedMessage());
+                buf = MessageSerializer.serialize(MessageType.CONNECTION_RESPONSE);
+                packetSender.send(conn.getAddress(), buf, buf.length);
                 break;
             default:
                 break;

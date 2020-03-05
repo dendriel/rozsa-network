@@ -3,10 +3,8 @@ package com.rozsa.network;
 import com.rozsa.network.channel.DeliveryMethod;
 import com.rozsa.network.channel.ReceiverChannel;
 import com.rozsa.network.channel.SenderChannel;
-import com.rozsa.network.channel.UnreliableSenderChannel;
-import com.rozsa.network.message.incoming.IncomingMessage;
-import com.rozsa.network.message.outgoing.OutgoingMessage;
-import com.rozsa.network.message.outgoing.ConnectRequestMessage;
+import com.rozsa.network.message.IncomingMessage;
+import com.rozsa.network.message.OutgoingMessage;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -173,9 +171,8 @@ public class Connection {
             return;
         }
 
-        ConnectRequestMessage connReq = new ConnectRequestMessage();
-        byte[] data = connReq.getData();
-        sender.send(address, data, connReq.getDataLength());
+        byte[] data = MessageSerializer.serialize(MessageType.CONNECTION_REQUEST);
+        sender.send(address, data, data.length);
 
         state = AWAITING_CONNECT_RESPONSE;
 

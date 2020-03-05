@@ -1,8 +1,7 @@
 package com.rozsa.network;
 
 import com.rozsa.network.channel.DeliveryMethod;
-import com.rozsa.network.message.incoming.DisconnectedMessage;
-import com.rozsa.network.message.outgoing.*;
+import com.rozsa.network.message.DisconnectedMessage;
 
 import java.net.DatagramPacket;
 import java.net.SocketException;
@@ -89,8 +88,8 @@ public class PeerLoop extends Thread implements PacketSender {
         incomingMessages.enqueue(disconnectedMessage);
 
         if (reason == DisconnectReason.LOCAL_CLOSE) {
-            ConnectionClosedMessage closedMessage = new ConnectionClosedMessage();
-            send(conn.getAddress(), closedMessage.getData(), closedMessage.getDataLength());
+            byte[] buf = MessageSerializer.serialize(MessageType.CONNECTION_CLOSED);
+            send(conn.getAddress(), buf, buf.length);
         }
     }
 

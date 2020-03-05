@@ -1,9 +1,7 @@
 package com.rozsa.network.channel;
 
-import com.rozsa.network.Address;
-import com.rozsa.network.Logger;
-import com.rozsa.network.message.outgoing.OutgoingMessage;
-import com.rozsa.network.PacketSender;
+import com.rozsa.network.*;
+import com.rozsa.network.message.OutgoingMessage;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -27,7 +25,8 @@ public class SenderChannel extends BaseChannel {
     public void update() {
         while(!outgoingMessages.isEmpty()) {
             OutgoingMessage msg = outgoingMessages.poll();
-            sender.send(addr, msg.getData(), msg.getDataLength());
+            byte[] buf = MessageSerializer.serialize(MessageType.USER_DATA, type, (short)0, msg.getData(), msg.getDataLength());
+            sender.send(addr, buf, buf.length);
         }
     }
 

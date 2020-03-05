@@ -1,8 +1,8 @@
 package com.rozsa.network;
 
 import com.rozsa.network.channel.DeliveryMethod;
-import com.rozsa.network.message.incoming.ConnectedMessage;
-import com.rozsa.network.message.incoming.IncomingUserDataMessage;
+import com.rozsa.network.message.ConnectedMessage;
+import com.rozsa.network.message.IncomingUserDataMessage;
 
 public class UserDataHandler implements IncomingMessageHandler {
     private final ConnectionHolder connHolder;

@@ -1,8 +1,8 @@
-package com.rozsa.network.message.incoming;
+package com.rozsa.network.message;
 
 import com.rozsa.network.Connection;
 
-public class ConnectedMessage extends IncomingMessage {
+public final class ConnectedMessage extends IncomingMessage {
     public ConnectedMessage(Connection connection) {
         super(IncomingMessageType.CONNECTED, connection);
     }

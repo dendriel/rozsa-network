@@ -1,6 +1,6 @@
 package com.rozsa.network;
 
-import com.rozsa.network.message.incoming.IncomingMessage;
+import com.rozsa.network.message.IncomingMessage;
 
 /**
  * Holds messages released to be forwarded to the user.

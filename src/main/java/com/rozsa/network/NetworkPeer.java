@@ -1,8 +1,7 @@
 package com.rozsa.network;
 
 import com.rozsa.network.channel.DeliveryMethod;
-import com.rozsa.network.message.incoming.*;
-import com.rozsa.network.message.outgoing.OutgoingMessage;
+import com.rozsa.network.message.*;
 
 import java.io.NotActiveException;
 import java.net.SocketException;

@@ -1,8 +1,8 @@
 package com.rozsa.network;
 
-import com.rozsa.network.message.incoming.PingUpdatedMessage;
-import com.rozsa.network.message.outgoing.PingMessage;
-import com.rozsa.network.message.outgoing.PongMessage;
+import com.rozsa.network.message.PingUpdatedMessage;
+
+import static com.rozsa.network.channel.DeliveryMethod.UNRELIABLE;
 
 class ConnectionHeartbeat {
     private final Connection conn;
@@ -56,8 +56,8 @@ class ConnectionHeartbeat {
     private void sendPing() {
         lastSentPingTime = Clock.getCurrentTimeInNanos();
         lastPingSentSeqNumber = currSeqNumber++;
-        PingMessage ping = new PingMessage(lastPingSentSeqNumber);
-        sender.send(conn.getAddress(), ping.getData(), ping.getDataLength());
+        byte[] buf = MessageSerializer.serialize(MessageType.PING, UNRELIABLE, lastPingSentSeqNumber);
+        sender.send(conn.getAddress(), buf, buf.length);
     }
 
     void pingReceived(short seqNumber) {
@@ -66,8 +66,8 @@ class ConnectionHeartbeat {
     }
 
     private void sendPong(short seqNumber) {
-        PongMessage pong = new PongMessage(seqNumber);
-        sender.send(conn.getAddress(), pong.getData(), pong.getDataLength());
+        byte[] buf = MessageSerializer.serialize(MessageType.PONG, UNRELIABLE, seqNumber);
+        sender.send(conn.getAddress(), buf, buf.length);
     }
 
     void pongReceived(short seqNumber) {

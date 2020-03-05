@@ -1,7 +1,7 @@
 package com.rozsa.network.channel;
 
 public abstract class BaseChannel implements Channel {
-    private final DeliveryMethod type;
+    final DeliveryMethod type;
 
     BaseChannel(DeliveryMethod type) {
         this.type = type;

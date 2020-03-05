@@ -1,11 +1,11 @@
 import com.rozsa.network.NetworkPeer;
 import com.rozsa.network.PeerConfig;
 import com.rozsa.network.channel.DeliveryMethod;
-import com.rozsa.network.message.incoming.ConnectedMessage;
-import com.rozsa.network.message.incoming.DisconnectedMessage;
-import com.rozsa.network.message.incoming.IncomingUserDataMessage;
-import com.rozsa.network.message.incoming.PingUpdatedMessage;
-import com.rozsa.network.message.outgoing.OutgoingUserDataMessage;
+import com.rozsa.network.message.ConnectedMessage;
+import com.rozsa.network.message.DisconnectedMessage;
+import com.rozsa.network.message.IncomingUserDataMessage;
+import com.rozsa.network.message.PingUpdatedMessage;
+import com.rozsa.network.message.OutgoingMessage;
 
 import java.io.NotActiveException;
 import java.net.SocketException;
@@ -39,7 +39,7 @@ public class Main {
     static NetworkPeer peer;
 
     static void onPingUpdatedEvent(PingUpdatedMessage msg) {
-        System.out.println("Ping updated to " + msg.getPingMicros());
+        System.out.println("Ping updated to " + msg.getPingMicros() + "us");
     }
 
     static void onConnectedEvent(ConnectedMessage msg) {
@@ -47,8 +47,9 @@ public class Main {
 
         if (!isServer) {
             String myName = "Vitor Rozsa";
-            OutgoingUserDataMessage outgoingMsg = new OutgoingUserDataMessage(myName.length());
+            OutgoingMessage outgoingMsg = new OutgoingMessage(myName.length());
             outgoingMsg.writeString(myName);
+            outgoingMsg.writeString(String.format(" - extra text!"));
             peer.sendMessage(msg.getConnection(), outgoingMsg, DeliveryMethod.UNRELIABLE);
         }
     }

@@ -1,7 +1,7 @@
 package com.rozsa.network;
 
 import com.rozsa.network.channel.DeliveryMethod;
-import com.rozsa.network.message.incoming.ConnectedMessage;
+import com.rozsa.network.message.ConnectedMessage;
 
 public class ConnectionEstablishedHandler implements IncomingMessageHandler {
     private final ConnectionHolder connHolder;
