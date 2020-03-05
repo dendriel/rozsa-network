@@ -1,17 +1,21 @@
 package com.rozsa.network;
 
+import com.rozsa.network.channel.DeliveryMethod;
 import com.rozsa.network.message.outgoing.MessageType;
 
 public abstract class Message {
     protected final MessageType type;
+    protected final DeliveryMethod method;
     protected byte[] data;
     protected int dataIdx = 0;
 
-    public Message(MessageType type, int size, short seqNumber) {
+    public Message(MessageType type, DeliveryMethod method, int size, short seqNumber) {
         this.type = type;
+        this.method = method;
         data = new byte[size];
 
         data[dataIdx++] = type.getId();
+        data[dataIdx++] = method.getId();
         data[dataIdx++] = (byte)(seqNumber & 0xFF);
         data[dataIdx++] = (byte)((seqNumber >> 8) & 0xFF);
     }

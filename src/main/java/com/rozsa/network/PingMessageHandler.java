@@ -1,5 +1,7 @@
 package com.rozsa.network;
 
+import com.rozsa.network.channel.DeliveryMethod;
+
 public class PingMessageHandler implements IncomingMessageHandler {
     private final ConnectionHolder connHolder;
 
@@ -9,7 +11,7 @@ public class PingMessageHandler implements IncomingMessageHandler {
 
 
     @Override
-    public void handle(Address addr, byte[] data, int length, short seqNumber) {
+    public void handle(Address addr, DeliveryMethod deliveryMethod, short seqNumber, byte[] data, int length) {
         Connection conn = connHolder.getConnection(addr.getId());
         if (conn == null) {
             Logger.warn("Received ping from unconnected source %s.", addr);

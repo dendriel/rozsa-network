@@ -1,5 +1,6 @@
 package com.rozsa.network;
 
+import com.rozsa.network.channel.DeliveryMethod;
 import com.rozsa.network.message.incoming.DisconnectedMessage;
 import com.rozsa.network.message.outgoing.*;
 
@@ -10,14 +11,14 @@ import java.util.EnumMap;
 public class PeerLoop extends Thread implements PacketSender {
     private final UDPSocket udpSocket;
     private final ConnectionHolder connHolder;
-    private final IncomingMessagesQueue messageQueue;
+    private final IncomingMessagesQueue incomingMessages;
     private EnumMap<MessageType, IncomingMessageHandler> messageHandlers;
 
     private volatile boolean isRunning;
 
-    PeerLoop(ConnectionHolder connHolder, IncomingMessagesQueue messageQueue, PeerConfig config) throws SocketException {
+    PeerLoop(ConnectionHolder connHolder, IncomingMessagesQueue incomingMessages, PeerConfig config) throws SocketException {
         this.connHolder = connHolder;
-        this.messageQueue = messageQueue;
+        this.incomingMessages = incomingMessages;
         isRunning = true;
         initializeHandlers();
 
@@ -27,14 +28,14 @@ public class PeerLoop extends Thread implements PacketSender {
     private void initializeHandlers() {
         messageHandlers = new EnumMap<>(MessageType.class);
         messageHandlers.put(MessageType.UNKNOWN, new UnknownMessageHandler());
-        messageHandlers.put(MessageType.CONNECTION_REQUEST, new ConnectionRequestHandler(connHolder, messageQueue, this));
-        messageHandlers.put(MessageType.CONNECTION_RESPONSE, new ConnectionResponseHandler(connHolder, messageQueue, this));
-        messageHandlers.put(MessageType.CONNECTION_ESTABLISHED, new ConnectionEstablishedHandler(connHolder, messageQueue));
+        messageHandlers.put(MessageType.CONNECTION_REQUEST, new ConnectionRequestHandler(connHolder, incomingMessages, this));
+        messageHandlers.put(MessageType.CONNECTION_RESPONSE, new ConnectionResponseHandler(connHolder, incomingMessages, this));
+        messageHandlers.put(MessageType.CONNECTION_ESTABLISHED, new ConnectionEstablishedHandler(connHolder, incomingMessages));
         messageHandlers.put(MessageType.CONNECTION_DENIED, new ConnectionDeniedHandler());
         messageHandlers.put(MessageType.CONNECTION_CLOSED, new ConnectionClosedHandler(connHolder));
         messageHandlers.put(MessageType.PING, new PingMessageHandler(connHolder));
         messageHandlers.put(MessageType.PONG, new PongMessageHandler(connHolder));
-        messageHandlers.put(MessageType.USER_DATA, new UserDataHandler(connHolder, messageQueue));
+        messageHandlers.put(MessageType.USER_DATA, new UserDataHandler(connHolder, incomingMessages));
     }
 
     public void run() {
@@ -68,7 +69,7 @@ public class PeerLoop extends Thread implements PacketSender {
         if (conn.isHandshakeExpired()) {
             connHolder.removeHandshake(conn);
             DisconnectedMessage disconnectedMessage = new DisconnectedMessage(conn, DisconnectReason.NO_RESPONSE);
-            messageQueue.enqueue(disconnectedMessage);
+            incomingMessages.enqueue(disconnectedMessage);
         }
 
         if (conn.isAwaitingConnectionEstablishedExpired()) {
@@ -85,7 +86,7 @@ public class PeerLoop extends Thread implements PacketSender {
 
         DisconnectReason reason = conn.getDisconnectReason();
         DisconnectedMessage disconnectedMessage = new DisconnectedMessage(conn, reason);
-        messageQueue.enqueue(disconnectedMessage);
+        incomingMessages.enqueue(disconnectedMessage);
 
         if (reason == DisconnectReason.LOCAL_CLOSE) {
             ConnectionClosedMessage closedMessage = new ConnectionClosedMessage();
@@ -110,6 +111,7 @@ public class PeerLoop extends Thread implements PacketSender {
 
         // deserialize header
         MessageType type = MessageType.from(buf[dataIdx++]);
+        DeliveryMethod method = DeliveryMethod.from(buf[dataIdx++]);
         int seqNumber = (buf[dataIdx++] & 0xFF);
         seqNumber = (seqNumber | (buf[dataIdx++] & 0xFF) << 8);
 //        Logger.info("SEQ %d", seqNumber);
@@ -120,6 +122,6 @@ public class PeerLoop extends Thread implements PacketSender {
         System.arraycopy(buf, dataIdx, data, 0, data.length);
 
         IncomingMessageHandler handler = messageHandlers.getOrDefault(type, new UnknownMessageHandler());
-        handler.handle(addr, data, data.length, (short)seqNumber);
+        handler.handle(addr, method, (short)seqNumber, data, data.length);
     }
 }

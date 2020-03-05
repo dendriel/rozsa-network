@@ -4,6 +4,7 @@ import com.rozsa.network.channel.DeliveryMethod;
 import com.rozsa.network.channel.ReceiverChannel;
 import com.rozsa.network.channel.SenderChannel;
 import com.rozsa.network.channel.UnreliableSenderChannel;
+import com.rozsa.network.message.incoming.IncomingMessage;
 import com.rozsa.network.message.outgoing.OutgoingMessage;
 import com.rozsa.network.message.outgoing.ConnectRequestMessage;
 
@@ -15,6 +16,7 @@ public class Connection {
     private final PeerConfig config;
     private final Address address;
     private final PacketSender sender;
+    private final IncomingMessagesQueue incomingMessages;
     private final ConnectionHeartbeat heartbeat;
     private final long maximumHandshakeWaitingTime;
 
@@ -33,6 +35,7 @@ public class Connection {
         this.config = config;
         this.address = address;
         this.sender = sender;
+        this.incomingMessages = incomingMessages;
 
         maximumHandshakeWaitingTime = config.getMaximumHandshakeAttempts() * config.getIntervalBetweenHandshakes();
         state = ConnectionState.DISCONNECTED;
@@ -101,24 +104,32 @@ public class Connection {
         return false;
     }
 
-    void enqueueMessage(OutgoingMessage msg, DeliveryMethod deliveryMethod) {
-        SenderChannel channel = getOrCreateChannel(deliveryMethod);
+    void enqueueOutgoingMessage(OutgoingMessage msg, DeliveryMethod deliveryMethod) {
+        SenderChannel channel = getOrCreateSenderChannel(deliveryMethod);
         channel.enqueue(msg);
     }
 
-    private SenderChannel getOrCreateChannel(DeliveryMethod deliveryMethod) {
-        senderChannels.computeIfAbsent(deliveryMethod, this::create);
+    void enqueueIncomingMessage(IncomingMessage msg, DeliveryMethod deliveryMethod) {
+        ReceiverChannel channel = getOrCreateReceiverChannel(deliveryMethod);
+        channel.enqueue(msg);
+    }
+
+    private SenderChannel getOrCreateSenderChannel(DeliveryMethod deliveryMethod) {
+        senderChannels.computeIfAbsent(deliveryMethod, this::createSenderChannel);
         return senderChannels.get(deliveryMethod);
     }
 
-    private SenderChannel create(DeliveryMethod deliveryMethod) {
-        switch (deliveryMethod) {
-            case UNRELIABLE:
-                return new UnreliableSenderChannel(address, sender);
-            default:
-                Logger.debug("Unhandled delivery method!! " + deliveryMethod);
-                return new UnreliableSenderChannel(address, sender);
-        }
+    private SenderChannel createSenderChannel(DeliveryMethod deliveryMethod) {
+        return SenderChannel.create(deliveryMethod, address, sender);
+    }
+
+    private ReceiverChannel getOrCreateReceiverChannel(DeliveryMethod deliveryMethod) {
+        receiverChannels.computeIfAbsent(deliveryMethod, this::createReceiverChannel);
+        return receiverChannels.get(deliveryMethod);
+    }
+
+    private ReceiverChannel createReceiverChannel(DeliveryMethod deliveryMethod) {
+        return ReceiverChannel.create(deliveryMethod, incomingMessages);
     }
 
     void pingReceived(short seqNumber) {

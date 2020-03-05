@@ -1,9 +1,11 @@
 import com.rozsa.network.NetworkPeer;
 import com.rozsa.network.PeerConfig;
+import com.rozsa.network.channel.DeliveryMethod;
 import com.rozsa.network.message.incoming.ConnectedMessage;
 import com.rozsa.network.message.incoming.DisconnectedMessage;
 import com.rozsa.network.message.incoming.IncomingUserDataMessage;
 import com.rozsa.network.message.incoming.PingUpdatedMessage;
+import com.rozsa.network.message.outgoing.OutgoingUserDataMessage;
 
 import java.io.NotActiveException;
 import java.net.SocketException;
@@ -43,12 +45,12 @@ public class Main {
     static void onConnectedEvent(ConnectedMessage msg) {
         System.out.println("Connected to " + msg.getConnection());
 
-//        if (!isServer) {
-//            String myName = "Vitor Rozsa";
-//            OutgoingUserDataMessage outgoingMsg = new OutgoingUserDataMessage(myName.length());
-//            outgoingMsg.writeString(myName);
-//            peer.sendMessage(msg.getConnection(), outgoingMsg, DeliveryMethod.UNRELIABLE);
-//        }
+        if (!isServer) {
+            String myName = "Vitor Rozsa";
+            OutgoingUserDataMessage outgoingMsg = new OutgoingUserDataMessage(myName.length());
+            outgoingMsg.writeString(myName);
+            peer.sendMessage(msg.getConnection(), outgoingMsg, DeliveryMethod.UNRELIABLE);
+        }
     }
 
     static void onDisconnectedEvent(DisconnectedMessage msg) {

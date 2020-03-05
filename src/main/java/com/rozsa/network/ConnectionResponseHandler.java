@@ -1,21 +1,22 @@
 package com.rozsa.network;
 
+import com.rozsa.network.channel.DeliveryMethod;
 import com.rozsa.network.message.incoming.ConnectedMessage;
 import com.rozsa.network.message.outgoing.ConnectEstablishedMessage;
 import com.rozsa.network.message.outgoing.OutgoingMessage;
 
 public class ConnectionResponseHandler implements IncomingMessageHandler {
     private final ConnectionHolder connHolder;
-    private final IncomingMessagesQueue messageQueue;
+    private final IncomingMessagesQueue incomingMessages;
     private final PacketSender packetSender;
 
     public ConnectionResponseHandler(
             ConnectionHolder connHolder,
-            IncomingMessagesQueue messageQueue,
+            IncomingMessagesQueue incomingMessages,
             PacketSender packetSender
     ) {
         this.connHolder = connHolder;
-        this.messageQueue = messageQueue;
+        this.incomingMessages = incomingMessages;
         this. packetSender = packetSender;
     }
 
@@ -24,7 +25,7 @@ public class ConnectionResponseHandler implements IncomingMessageHandler {
     }
 
     @Override
-    public void handle(Address addr, byte[] data, int length, short seqNumber) {
+    public void handle(Address addr, DeliveryMethod deliveryMethod, short seqNumber, byte[] data, int length) {
         Connection conn = connHolder.getHandshakeOrConnection(addr.getId());
         if (conn == null) {
             conn = connHolder.createAsIncomingHandshake(addr);
@@ -35,7 +36,7 @@ public class ConnectionResponseHandler implements IncomingMessageHandler {
             case AWAITING_CONNECT_RESPONSE:
                 conn.setConnected();
                 connHolder.promoteConnection(conn);
-                messageQueue.enqueue(new ConnectedMessage(conn));
+                incomingMessages.enqueue(new ConnectedMessage(conn));
                 send(conn, new ConnectEstablishedMessage());
                 break;
             case CONNECTED:

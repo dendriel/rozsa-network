@@ -1,21 +1,22 @@
 package com.rozsa.network;
 
+import com.rozsa.network.channel.DeliveryMethod;
 import com.rozsa.network.message.incoming.ConnectedMessage;
 
 public class ConnectionEstablishedHandler implements IncomingMessageHandler {
     private final ConnectionHolder connHolder;
-    private final IncomingMessagesQueue messageQueue;
+    private final IncomingMessagesQueue incomingMessages;
 
     public ConnectionEstablishedHandler(
             ConnectionHolder connHolder,
-            IncomingMessagesQueue messageQueue
+            IncomingMessagesQueue incomingMessages
     ) {
         this.connHolder = connHolder;
-        this.messageQueue = messageQueue;
+        this.incomingMessages = incomingMessages;
     }
 
     @Override
-    public void handle(Address addr, byte[] data, int length, short seqNumber) {
+    public void handle(Address addr, DeliveryMethod deliveryMethod, short seqNumber, byte[] data, int length) {
         Connection conn = connHolder.getHandshakeOrConnection(addr.getId());
         if (conn == null) {
             conn = connHolder.createAsIncomingHandshake(addr);
@@ -27,7 +28,7 @@ public class ConnectionEstablishedHandler implements IncomingMessageHandler {
             case SEND_CONNECT_REQUEST:
                 conn.setConnected();
                 connHolder.promoteConnection(conn);
-                messageQueue.enqueue(new ConnectedMessage(conn));
+                incomingMessages.enqueue(new ConnectedMessage(conn));
                 break;
             case CONNECTED:
                 Logger.debug("Already connected to %s.", conn);

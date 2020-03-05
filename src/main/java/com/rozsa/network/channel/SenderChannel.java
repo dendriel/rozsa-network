@@ -1,6 +1,7 @@
 package com.rozsa.network.channel;
 
 import com.rozsa.network.Address;
+import com.rozsa.network.Logger;
 import com.rozsa.network.message.outgoing.OutgoingMessage;
 import com.rozsa.network.PacketSender;
 
@@ -27,6 +28,16 @@ public class SenderChannel extends BaseChannel {
         while(!outgoingMessages.isEmpty()) {
             OutgoingMessage msg = outgoingMessages.poll();
             sender.send(addr, msg.getData(), msg.getDataLength());
+        }
+    }
+
+    public static SenderChannel create(DeliveryMethod deliveryMethod, Address address, PacketSender sender) {
+        switch (deliveryMethod) {
+            case UNRELIABLE:
+                return new UnreliableSenderChannel(address, sender);
+            default:
+                Logger.debug("Unhandled delivery method!! " + deliveryMethod);
+                return new UnreliableSenderChannel(address, sender);
         }
     }
 }

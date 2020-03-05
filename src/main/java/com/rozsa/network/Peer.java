@@ -76,7 +76,7 @@ public class Peer {
     }
 
     public void sendMessage(Connection conn, OutgoingMessage msg, DeliveryMethod deliveryMethod) {
-        conn.enqueueMessage(msg, deliveryMethod);
+        conn.enqueueOutgoingMessage(msg, deliveryMethod);
     }
 
     private void assertInitialized() throws NotActiveException {

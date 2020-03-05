@@ -1,8 +1,10 @@
 package com.rozsa.network.message.outgoing;
 
+import static com.rozsa.network.channel.DeliveryMethod.UNRELIABLE;
+
 public class OutgoingUserDataMessage extends OutgoingMessage {
     public OutgoingUserDataMessage(int size) {
-        super(MessageType.USER_DATA, size, (short)0);
+        super(MessageType.USER_DATA, UNRELIABLE, size, (short)0);
     }
 
     public void writeString(String value) {
