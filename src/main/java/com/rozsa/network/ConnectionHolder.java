@@ -5,13 +5,15 @@ import java.util.concurrent.ConcurrentHashMap;
 
 class ConnectionHolder {
     private final PeerConfig config;
+    private final IncomingMessagesQueue incomingMessages;
     private final ConcurrentHashMap<Long, Connection> handshakes;
     private final ConcurrentHashMap<Long, Connection> connections;
 
     private PacketSender sender;
 
-    ConnectionHolder(PeerConfig config) {
+    ConnectionHolder(PeerConfig config, IncomingMessagesQueue incomingMessages) {
         this.config = config;
+        this.incomingMessages = incomingMessages;
         handshakes = new ConcurrentHashMap<>();
         connections = new ConcurrentHashMap<>();
     }
@@ -53,7 +55,7 @@ class ConnectionHolder {
     }
 
     private Connection createAsHandshake(Address addr, ConnectionState state) {
-        Connection handshake = new Connection(config, addr, sender);
+        Connection handshake = new Connection(config, addr, sender, incomingMessages);
         handshake.setState(state);
         handshakes.put(addr.getId(), handshake);
         return handshake;

@@ -8,8 +8,8 @@ import java.util.Date;
 public class Logger {
     // Disable this one when performance testing.
     public static void debug(String format, Object...args) {
-        String msg = String.format(format, args);
-        printLog(msg, "DEBUG", false);
+//        String msg = String.format(format, args);
+//        printLog(msg, "DEBUG", false);
     }
 
     public static void info(String format, Object...args) {

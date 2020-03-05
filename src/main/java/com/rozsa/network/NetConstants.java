@@ -6,4 +6,5 @@ class NetConstants {
     static final int DefaultReceiveBufferSize = 131071; // udp buffer size.
     static final float DefaultPingInterval = 1;
     static final float DefaultConnectionTimeout = 5;
+    static final boolean DefaultIsPingUpdatedEventEnabled = false;
 }

@@ -1,10 +1,7 @@
 package com.rozsa.network;
 
 import com.rozsa.network.channel.DeliveryMethod;
-import com.rozsa.network.message.incoming.ConnectedMessage;
-import com.rozsa.network.message.incoming.DisconnectedMessage;
-import com.rozsa.network.message.incoming.IncomingMessage;
-import com.rozsa.network.message.incoming.IncomingUserDataMessage;
+import com.rozsa.network.message.incoming.*;
 import com.rozsa.network.message.outgoing.OutgoingMessage;
 
 import java.io.NotActiveException;
@@ -18,11 +15,13 @@ public class NetworkPeer {
     private final Peer peer;
     private final Set<Consumer<ConnectedMessage>> onConnectedEventListeners;
     private final Set<Consumer<DisconnectedMessage>> onDisconnectedEventListeners;
+    private final Set<Consumer<PingUpdatedMessage>> onPingUpdatedEventListeners;
 
     public NetworkPeer(PeerConfig config) throws SocketException {
         peer = new Peer(config);
         onConnectedEventListeners = new HashSet<>();
         onDisconnectedEventListeners = new HashSet<>();
+        onPingUpdatedEventListeners = new HashSet<>();
     }
 
     public void initialize() {
@@ -49,6 +48,14 @@ public class NetworkPeer {
         onDisconnectedEventListeners.remove(listener);
     }
 
+    public void addOnPingUpdatedEventListener(Consumer<PingUpdatedMessage> listener) {
+        onPingUpdatedEventListeners.add(listener);
+    }
+
+    public void removeOnPingUpdatedEventListener(Consumer<PingUpdatedMessage> listener) {
+        onPingUpdatedEventListeners.remove(listener);
+    }
+
     public void connect(String ip, int port) throws NotActiveException, UnknownHostException {
         peer.connect(ip, port);
     }
@@ -68,12 +75,14 @@ public class NetworkPeer {
         }
 
         switch (msg.getType()) {
-            // TODO: create a connection state changed
             case CONNECTED:
                 handleConnectedMessage(msg);
                 break;
             case DISCONNECTED:
                 handleDisconnectedMessage(msg);
+                break;
+            case PING_UPDATED:
+                handlePingUpdatedMessage(msg);
                 break;
             case USER_DATA:
                 return (IncomingUserDataMessage)msg;
@@ -90,5 +99,9 @@ public class NetworkPeer {
 
     private void handleDisconnectedMessage(IncomingMessage msg) {
         onDisconnectedEventListeners.forEach(l -> l.accept((DisconnectedMessage)msg));
+    }
+
+    private void handlePingUpdatedMessage(IncomingMessage msg) {
+        onPingUpdatedEventListeners.forEach(l -> l.accept((PingUpdatedMessage)msg));
     }
 }

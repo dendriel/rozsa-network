@@ -21,8 +21,8 @@ public class Peer {
     public Peer(PeerConfig config) throws SocketException {
         this.config = config;
 
-        connHolder = new ConnectionHolder(config);
         incomingMessages = new PeerIncomingMessagesQueue();
+        connHolder = new ConnectionHolder(config, incomingMessages);
         peerLoop = new PeerLoop(connHolder, incomingMessages, config);
         connHolder.setPacketSender(peerLoop);
 

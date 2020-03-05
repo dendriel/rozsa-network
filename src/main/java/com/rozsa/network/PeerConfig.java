@@ -1,6 +1,6 @@
 package com.rozsa.network;
 
-//TODO: add interface.
+//TODO: add interface. Create a builder.
 public class PeerConfig {
     private int port;
     private int maximumHandshakeAttempts;
@@ -8,6 +8,7 @@ public class PeerConfig {
     private int receiveBufferSize;
     private float pingInterval;
     private float connectionTimeout;
+    private boolean isPingUpdatedEventEnabled;
 
     public PeerConfig() {
         this(0);
@@ -20,6 +21,7 @@ public class PeerConfig {
 
         pingInterval = NetConstants.DefaultPingInterval;
         connectionTimeout = NetConstants.DefaultConnectionTimeout;
+        isPingUpdatedEventEnabled = NetConstants.DefaultIsPingUpdatedEventEnabled;
 
         receiveBufferSize = NetConstants.DefaultReceiveBufferSize;
     }
@@ -70,5 +72,13 @@ public class PeerConfig {
 
     public void setConnectionTimeout(float connectionTimeout) {
         this.connectionTimeout = connectionTimeout;
+    }
+
+    public boolean isPingUpdatedEventEnabled() {
+        return isPingUpdatedEventEnabled;
+    }
+
+    public void setPingUpdatedEventEnabled(boolean pingUpdatedEventEnabled) {
+        this.isPingUpdatedEventEnabled = pingUpdatedEventEnabled;
     }
 }

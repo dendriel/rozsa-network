@@ -29,7 +29,7 @@ public class Connection {
     private ConcurrentHashMap<DeliveryMethod, ReceiverChannel> receiverChannels;
 
 
-    Connection(PeerConfig config, Address address, PacketSender sender) {
+    Connection(PeerConfig config, Address address, PacketSender sender, IncomingMessagesQueue incomingMessages) {
         this.config = config;
         this.address = address;
         this.sender = sender;
@@ -38,7 +38,7 @@ public class Connection {
         state = ConnectionState.DISCONNECTED;
         disconnectReason = DisconnectReason.NONE;
 
-        heartbeat = new ConnectionHeartbeat(config, this, sender);
+        heartbeat = new ConnectionHeartbeat(this, sender, incomingMessages, config);
         senderChannels = new ConcurrentHashMap<>();
         receiverChannels = new ConcurrentHashMap<>();
     }
@@ -147,7 +147,7 @@ public class Connection {
                 handleSendConnectRequest();
                 break;
             case AWAITING_CONNECT_ESTABLISHED:
-                handleAwaitingConnectEstablished();
+            // peer loop handles awaiting connect established timeouts.
                 break;
             // should not be in any of the states bellow if it is a handshake.
             case DISCONNECTED:
@@ -170,10 +170,6 @@ public class Connection {
 
         lastHandshakeAttemptTime = Clock.getCurrentTime();
         totalHandshakesAttempts++;
-    }
-
-    private void handleAwaitingConnectEstablished() {
-
     }
 
     private boolean isLastHandshakeInProgress() {
