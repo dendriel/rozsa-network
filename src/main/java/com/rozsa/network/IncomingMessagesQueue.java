@@ -17,4 +17,10 @@ public interface IncomingMessagesQueue {
      * @return if available, an IncomingMessage that may be casted according to its type.
      */
     IncomingMessage poll();
+
+    /**
+     * Count of incoming messages ready to read.
+     * @return Count of incoming messages.
+     */
+    int size();
 }

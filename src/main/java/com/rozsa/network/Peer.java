@@ -37,6 +37,10 @@ public class Peer {
         isInitialized = true;
     }
 
+    public int getIncomingMessagesCount() {
+        return incomingMessages.size();
+    }
+
     public IncomingMessage read() {
         return incomingMessages.poll();
     }

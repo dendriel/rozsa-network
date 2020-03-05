@@ -113,6 +113,7 @@ public class PeerLoop extends Thread implements PacketSender {
         int seqNumber = (buf[dataIdx++] & 0xFF);
         seqNumber = (seqNumber | (buf[dataIdx++] & 0xFF) << 8);
 //        Logger.info("SEQ %d", seqNumber);
+//        Logger.info("RECV %s", type);
 
         // deserialize data
         byte[] data = new byte[length - dataIdx];

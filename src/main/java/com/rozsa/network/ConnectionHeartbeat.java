@@ -74,7 +74,7 @@ class ConnectionHeartbeat {
 
         long lastRtt = Clock.getTimePassedSinceInNanos(lastSentPingTime);
         sRtt = (long)(0.875 * sRtt + lastRtt * 0.125);
-        Logger.info("New SRTT %dus - lastRtt %dus", Clock.nanosToMicros(sRtt), Clock.nanosToMicros(lastRtt));
+//        Logger.info("New SRTT %dus - lastRtt %dus", Clock.nanosToMicros(sRtt), Clock.nanosToMicros(lastRtt));
     }
 
     private boolean isTimeout() {

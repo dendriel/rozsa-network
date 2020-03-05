@@ -1,23 +1,71 @@
+import com.rozsa.network.NetworkPeer;
+import com.rozsa.network.PeerConfig;
+import com.rozsa.network.channel.DeliveryMethod;
+import com.rozsa.network.message.incoming.ConnectedMessage;
+import com.rozsa.network.message.incoming.DisconnectedMessage;
+import com.rozsa.network.message.incoming.IncomingUserDataMessage;
+import com.rozsa.network.message.outgoing.OutgoingUserDataMessage;
+
 import java.io.NotActiveException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
 public class Main {
-    public static void main(String[] args) throws SocketException, NotActiveException, UnknownHostException {
+    public static void main(String[] args) throws SocketException, NotActiveException, UnknownHostException, InterruptedException {
         int serverPort = 9090;
         int clientPort = 8989;
-        boolean isServer = false;
-
-//        isServer = true;
+        isServer = true;
 
         if (isServer) {
-            NetworkPeer server = new NetworkPeer(serverPort);
-            server.start();
+            peer = new NetworkPeer(new PeerConfig(serverPort));
         }
         else {
-            NetworkPeer client = new NetworkPeer(clientPort);
-            client.start();
-            client.connect(serverPort);
+            peer = new NetworkPeer(new PeerConfig(clientPort));
+        }
+        peer.addOnConnectedEventListener(Main::onConnectedEvent);
+        peer.addOnDisconnectedEventListener(Main::onDisconnectedEvent);
+        peer.initialize();
+
+        if (!isServer) {
+            peer.connect("localhost", serverPort);
+        }
+
+        loop();
+    }
+
+    static boolean isServer;
+    static NetworkPeer peer;
+
+    static void onConnectedEvent(ConnectedMessage msg) {
+        System.out.println("Connected to " + msg.getConnection());
+
+        if (!isServer) {
+            String myName = "Vitor Rozsa";
+            OutgoingUserDataMessage outgoingMsg = new OutgoingUserDataMessage(myName.length());
+            outgoingMsg.writeString(myName);
+            peer.sendMessage(msg.getConnection(), outgoingMsg, DeliveryMethod.UNRELIABLE);
+        }
+    }
+
+    static void onDisconnectedEvent(DisconnectedMessage msg) {
+        System.out.println("Disconnected from " + msg.getConnection() + " reason: " + msg.getReason());
+    }
+
+    private static void loop() throws InterruptedException {
+        while (true) {
+            if (peer.getIncomingMessagesCount() == 0) {
+                Thread.sleep(1);
+                continue;
+            }
+
+            IncomingUserDataMessage msg = peer.read();
+            if (msg == null) {
+                // read an internal message.
+                continue;
+            }
+
+            System.out.println("Received message \"" + new String(msg.getData()) + "\" " + " from " + msg.getConnection());
+            peer.disconnect(msg.getConnection());
         }
     }
 }

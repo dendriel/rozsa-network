@@ -20,4 +20,8 @@ class PeerIncomingMessagesQueue implements IncomingMessagesQueue {
     public IncomingMessage poll() {
         return messages.poll();
     }
+
+    public int size() {
+        return messages.size();
+    }
 }

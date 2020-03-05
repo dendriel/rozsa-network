@@ -1,8 +1,11 @@
+package com.rozsa.network;
+
+import com.rozsa.network.channel.DeliveryMethod;
 import com.rozsa.network.message.incoming.ConnectedMessage;
 import com.rozsa.network.message.incoming.DisconnectedMessage;
 import com.rozsa.network.message.incoming.IncomingMessage;
-import com.rozsa.network.Peer;
-import com.rozsa.network.PeerConfig;
+import com.rozsa.network.message.incoming.IncomingUserDataMessage;
+import com.rozsa.network.message.outgoing.OutgoingMessage;
 
 import java.io.NotActiveException;
 import java.net.SocketException;
@@ -11,12 +14,12 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 
-public class NetPeer {
+public class NetworkPeer {
     private final Peer peer;
     private final Set<Consumer<ConnectedMessage>> onConnectedEventListeners;
     private final Set<Consumer<DisconnectedMessage>> onDisconnectedEventListeners;
 
-    public NetPeer(PeerConfig config) throws SocketException {
+    public NetworkPeer(PeerConfig config) throws SocketException {
         peer = new Peer(config);
         onConnectedEventListeners = new HashSet<>();
         onDisconnectedEventListeners = new HashSet<>();
@@ -24,6 +27,10 @@ public class NetPeer {
 
     public void initialize() {
         peer.initialize();
+    }
+
+    public int getIncomingMessagesCount() {
+        return peer.getIncomingMessagesCount();
     }
 
     public void addOnConnectedEventListener(Consumer<ConnectedMessage> listener) {
@@ -46,7 +53,15 @@ public class NetPeer {
         peer.connect(ip, port);
     }
 
-    public IncomingMessage receive() {
+    public void disconnect(Connection conn) {
+        peer.disconnect(conn);
+    }
+
+    public void sendMessage(Connection conn, OutgoingMessage msg, DeliveryMethod deliveryMethod) {
+        peer.sendMessage(conn, msg, deliveryMethod);
+    }
+
+    public IncomingUserDataMessage read() {
         IncomingMessage msg = peer.read();
         if (msg == null) {
             return null;
@@ -61,7 +76,7 @@ public class NetPeer {
                 handleDisconnectedMessage(msg);
                 break;
             case USER_DATA:
-                return msg;
+                return (IncomingUserDataMessage)msg;
             default:
                 break;
         }
