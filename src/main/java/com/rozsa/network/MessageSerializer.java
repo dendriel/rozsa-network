@@ -1,7 +1,5 @@
 package com.rozsa.network;
 
-import com.rozsa.network.channel.DeliveryMethod;
-
 public class MessageSerializer {
     static byte[] serialize(MessageType type) {
         return serialize(type, DeliveryMethod.UNRELIABLE, (short)0, new byte[0], 0);

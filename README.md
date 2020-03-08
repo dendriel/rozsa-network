@@ -5,12 +5,16 @@ Simple Reliable UDP (RUDP) com.rozsa.network library in Java.
 
 - Three-way handshake (connection request, response and established);
 - Connection Heartbeat (provides latency value);
-- Latency monitoring (uses weighted average to calulate latency).
+- Latency monitoring (uses weighted average to calulate latency);
+- Connection status events (connected; disconnected);
+- Disconnection reason;
+- Synchronized network events delivery (NetworkPeer.read() may return a data message or trigger a control event);
 - Data delivery.
 
 # Delivery Methods
 
-- Unreliable
+- Unreliable;
+- Reliable.
 
 # Protocol Header
 

@@ -1,11 +1,9 @@
 package com.rozsa.network;
 
-import com.rozsa.network.channel.DeliveryMethod;
-import com.rozsa.network.channel.ReceiverChannel;
-import com.rozsa.network.channel.SenderChannel;
 import com.rozsa.network.message.IncomingMessage;
 import com.rozsa.network.message.OutgoingMessage;
 
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.rozsa.network.ConnectionState.*;
@@ -52,7 +50,7 @@ public class Connection {
         return address;
     }
 
-    public long getSRtt() {
+    long getSRtt() {
         return heartbeat.getSRtt();
     }
 
@@ -118,7 +116,7 @@ public class Connection {
     }
 
     private SenderChannel createSenderChannel(DeliveryMethod deliveryMethod) {
-        return SenderChannel.create(deliveryMethod, address, sender);
+        return SenderChannel.create(deliveryMethod, address, sender, heartbeat::getResendDelay);
     }
 
     private ReceiverChannel getOrCreateReceiverChannel(DeliveryMethod deliveryMethod) {
@@ -127,7 +125,7 @@ public class Connection {
     }
 
     private ReceiverChannel createReceiverChannel(DeliveryMethod deliveryMethod) {
-        return ReceiverChannel.create(deliveryMethod, incomingMessages);
+        return ReceiverChannel.create(deliveryMethod, address, sender, incomingMessages);
     }
 
     void pingReceived(short seqNumber) {
@@ -136,6 +134,11 @@ public class Connection {
 
     void pongReceived(short seqNumber) {
         heartbeat.pongReceived(seqNumber);
+    }
+
+    void ackReceived(IncomingMessage ack, DeliveryMethod method) {
+        SenderChannel channel = getOrCreateSenderChannel(method);
+        channel.enqueueAck(ack);
     }
 
     void handleTimeout() {
@@ -194,5 +197,18 @@ public class Connection {
                 "address=" + address.getIp() + ":" + address.getPort() +
                 ", ctrlState=" + state +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Connection that = (Connection) o;
+        return address.equals(that.address);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(address);
     }
 }

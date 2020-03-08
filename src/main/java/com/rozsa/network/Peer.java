@@ -1,6 +1,5 @@
 package com.rozsa.network;
 
-import com.rozsa.network.channel.DeliveryMethod;
 import com.rozsa.network.message.IncomingMessage;
 import com.rozsa.network.message.OutgoingMessage;
 

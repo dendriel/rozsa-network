@@ -1,6 +1,7 @@
+import com.rozsa.network.Connection;
 import com.rozsa.network.NetworkPeer;
 import com.rozsa.network.PeerConfig;
-import com.rozsa.network.channel.DeliveryMethod;
+import com.rozsa.network.DeliveryMethod;
 import com.rozsa.network.message.ConnectedMessage;
 import com.rozsa.network.message.DisconnectedMessage;
 import com.rozsa.network.message.IncomingUserDataMessage;
@@ -15,7 +16,7 @@ public class Main {
     public static void main(String[] args) throws SocketException, NotActiveException, UnknownHostException, InterruptedException {
         int serverPort = 9090;
         int clientPort = 8989;
-//        isServer = true;
+        isServer = true;
 
         int targetPort = isServer ? serverPort : clientPort;
 
@@ -39,19 +40,34 @@ public class Main {
     static NetworkPeer peer;
 
     static void onPingUpdatedEvent(PingUpdatedMessage msg) {
-        System.out.println("Ping updated to " + msg.getPingMicros() + "us");
+        System.out.println("> Ping updated to " + msg.getPingMicros() + "us");
     }
 
     static void onConnectedEvent(ConnectedMessage msg) {
-        System.out.println("Connected to " + msg.getConnection());
+        System.out.println("> Connected to " + msg.getConnection());
 
         if (!isServer) {
-            String myName = "Vitor Rozsa";
+            sendReliable(msg.getConnection());
+        }
+    }
+
+    static void sendReliable(Connection conn) {
+        int count = 2048;
+
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        for (int i = 0;  i < count; i++) {
+            String myName = String.valueOf(i);
             OutgoingMessage outgoingMsg = new OutgoingMessage(myName.length());
             outgoingMsg.writeString(myName);
-            outgoingMsg.writeString(String.format(" - extra text!"));
-            peer.sendMessage(msg.getConnection(), outgoingMsg, DeliveryMethod.UNRELIABLE);
+//            outgoingMsg.writeString(String.format(" - extra text!"));
+            peer.sendMessage(conn, outgoingMsg, DeliveryMethod.RELIABLE);
         }
+
     }
 
     static void onDisconnectedEvent(DisconnectedMessage msg) {
@@ -71,7 +87,8 @@ public class Main {
                 continue;
             }
 
-            System.out.println("Received message \"" + new String(msg.getData()) + "\" " + " from " + msg.getConnection());
+//            System.out.println("Received message \"" + new String(msg.getData()) + "\" " + " from " + msg.getConnection());
+            System.out.println("Received message \"" + new String(msg.getData()) + "\"");
 //            peer.disconnect(msg.getConnection());
         }
     }

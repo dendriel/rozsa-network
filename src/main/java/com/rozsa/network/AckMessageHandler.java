@@ -1,18 +1,20 @@
 package com.rozsa.network;
 
-public class PingMessageHandler implements IncomingMessageHandler {
+import com.rozsa.network.message.IncomingMessage;
+import com.rozsa.network.message.IncomingMessageType;
+
+class AckMessageHandler implements IncomingMessageHandler {
     private final ConnectionHolder connHolder;
 
-    public PingMessageHandler(ConnectionHolder connHolder) {
+    AckMessageHandler(ConnectionHolder connHolder) {
         this.connHolder = connHolder;
     }
-
 
     @Override
     public void handle(Address addr, DeliveryMethod deliveryMethod, short seqNumber, byte[] data, int length) {
         Connection conn = connHolder.getConnection(addr.getId());
         if (conn == null) {
-            Logger.warn("Received ping from unconnected source %s.", addr);
+            Logger.warn("Received ack from unconnected source %s.", addr);
             return;
         }
 
@@ -20,13 +22,14 @@ public class PingMessageHandler implements IncomingMessageHandler {
             case AWAITING_CONNECT_RESPONSE:
             case AWAITING_CONNECT_ESTABLISHED:
             case SEND_CONNECT_REQUEST:
-                Logger.warn("Received ping while in an invalid state. Source %s.", addr);
+                Logger.warn("Received ack while in an invalid state. Source %s.", addr);
                 break;
             case CONNECTED:
-                conn.pingReceived(seqNumber);
+                IncomingMessage ack = new IncomingMessage(IncomingMessageType.ACK, conn, seqNumber, data, length);
+                conn.ackReceived(ack, deliveryMethod);
                 break;
             case DISCONNECTED:
-                Logger.warn("Already disconnected from source %s. Won't process the ping.", addr);
+                Logger.warn("Already disconnected from source %s. Won't process the ack.", addr);
                 break;
             default:
                 break;

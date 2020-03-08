@@ -1,4 +1,4 @@
-package com.rozsa.network.channel;
+package com.rozsa.network;
 
 import java.util.HashMap;
 

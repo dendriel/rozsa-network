@@ -2,6 +2,7 @@ package com.rozsa.network;
 
 import com.rozsa.network.message.IncomingMessage;
 
+import java.util.Collection;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 class PeerIncomingMessagesQueue implements IncomingMessagesQueue {
@@ -14,6 +15,11 @@ class PeerIncomingMessagesQueue implements IncomingMessagesQueue {
     @Override
     public void enqueue(IncomingMessage message) {
         messages.add(message);
+    }
+
+    @Override
+    public void enqueueAll(Collection<IncomingMessage> messages) {
+        this.messages.addAll(messages);
     }
 
     @Override

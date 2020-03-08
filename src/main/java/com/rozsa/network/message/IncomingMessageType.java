@@ -5,4 +5,5 @@ public enum IncomingMessageType {
     DISCONNECTED,
     USER_DATA,
     PING_UPDATED,
+    ACK,
 }

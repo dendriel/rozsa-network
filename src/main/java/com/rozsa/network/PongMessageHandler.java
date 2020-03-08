@@ -1,7 +1,5 @@
 package com.rozsa.network;
 
-import com.rozsa.network.channel.DeliveryMethod;
-
 public class PongMessageHandler implements IncomingMessageHandler {
     private final ConnectionHolder connHolder;
 

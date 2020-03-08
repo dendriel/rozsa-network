@@ -40,7 +40,7 @@ public class Logger {
             String[] classNameTokens = e.getClassName().split("\\.");
             String className = classNameTokens[classNameTokens.length-1];
 
-            formatted = String.format("%s [%s:%s:%d]", className, e.getMethodName(), e.getLineNumber());
+            formatted = String.format("%s [%s:%s:%d]", formatted, className, e.getMethodName(), e.getLineNumber());
         }
 
         System.out.println(formatted);

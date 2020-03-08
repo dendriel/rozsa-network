@@ -1,14 +1,13 @@
-package com.rozsa.network.channel;
+package com.rozsa.network;
 
-import com.rozsa.network.IncomingMessagesQueue;
-import com.rozsa.network.Logger;
 import com.rozsa.network.message.IncomingMessage;
+import com.rozsa.network.message.IncomingMessageType;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class ReceiverChannel extends BaseChannel {
-    private final ConcurrentLinkedQueue<IncomingMessage> incomingMessages;
-    private final IncomingMessagesQueue incomingMessagesQueue;
+    protected final ConcurrentLinkedQueue<IncomingMessage> incomingMessages;
+    protected final IncomingMessagesQueue incomingMessagesQueue;
 
     ReceiverChannel(DeliveryMethod type, IncomingMessagesQueue incomingMessagesQueue) {
         super(type);
@@ -29,21 +28,21 @@ public class ReceiverChannel extends BaseChannel {
     }
 
     private void handleIncomingMessage(IncomingMessage message) {
-        switch (message.getType()) {
-            case USER_DATA:
-                incomingMessagesQueue.enqueue(message);
-                break;
-            default:
-                Logger.error("Unhandled channel message received: %s", message.getType());
-                break;
+        if (message.getType() != IncomingMessageType.USER_DATA) {
+            Logger.error("Unhandled channel message received: %s", message.getType());
+            return;
         }
+
+        incomingMessagesQueue.enqueue(message);
     }
 
 
-    public static ReceiverChannel create(DeliveryMethod deliveryMethod, IncomingMessagesQueue incomingMessagesQueue) {
+    public static ReceiverChannel create(DeliveryMethod deliveryMethod, Address address, PacketSender sender, IncomingMessagesQueue incomingMessagesQueue) {
         switch (deliveryMethod) {
             case UNRELIABLE:
                 return new UnreliableReceiverChannel(incomingMessagesQueue);
+            case RELIABLE:
+                return new ReliableReceiverChannel(address, sender, incomingMessagesQueue, NetConstants.MaxSeqNumbers);
             default:
                 Logger.debug("Unhandled delivery method!! " + deliveryMethod);
                 return new UnreliableReceiverChannel(incomingMessagesQueue);

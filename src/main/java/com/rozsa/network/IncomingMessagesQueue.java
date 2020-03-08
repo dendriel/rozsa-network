@@ -2,6 +2,8 @@ package com.rozsa.network;
 
 import com.rozsa.network.message.IncomingMessage;
 
+import java.util.Collection;
+
 /**
  * Holds messages released to be forwarded to the user.
  */
@@ -11,6 +13,12 @@ public interface IncomingMessagesQueue {
      * @param message the message to be enqueued.
      */
     void enqueue(IncomingMessage message);
+
+    /**
+     * Enqueue a collection of messages.
+     * @param messages messages to be enqueued.
+     */
+    void enqueueAll(Collection<IncomingMessage> messages);
 
     /**
      * Read an incoming message if available.

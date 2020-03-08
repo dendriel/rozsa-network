@@ -2,7 +2,7 @@ package com.rozsa.network;
 
 import com.rozsa.network.message.PingUpdatedMessage;
 
-import static com.rozsa.network.channel.DeliveryMethod.UNRELIABLE;
+import static com.rozsa.network.DeliveryMethod.UNRELIABLE;
 
 class ConnectionHeartbeat {
     private final Connection conn;
@@ -33,7 +33,8 @@ class ConnectionHeartbeat {
 
     void reset() {
         lastReceivedPingTime = Clock.getCurrentTimeInNanos();
-        lastSentPingTime = Clock.getCurrentTimeInNanos();
+        // we need the ping asap so resend functionality may work correctly.
+        lastSentPingTime = 0;
     }
 
     void update() {
@@ -49,8 +50,15 @@ class ConnectionHeartbeat {
         sendPing();
     }
 
-    public long getSRtt() {
-        return Clock.nanosToMillis(sRtt);
+    long getResendDelay() {
+        if (sRtt <= 0) {
+            return Clock.secondsToNanos(0.1f); // 100 ms default srtt.
+        }
+        return (long)(Clock.secondsToNanos(0.025f) + (sRtt * 2.1)); // 25 ms + double rtt
+    }
+
+    long getSRtt() {
+        return sRtt;
     }
 
     private void sendPing() {

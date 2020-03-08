@@ -11,7 +11,8 @@ public enum MessageType {
     CONNECTION_CLOSED(5),
     PING(6),
     PONG(7),
-    USER_DATA(8),
+    ACK(8),
+    USER_DATA(9),
     ;
 
     private final byte id;
@@ -36,6 +37,7 @@ public enum MessageType {
         idToTypeMapper.put(CONNECTION_CLOSED.getId(), CONNECTION_CLOSED);
         idToTypeMapper.put(PING.getId(), PING);
         idToTypeMapper.put(PONG.getId(), PONG);
+        idToTypeMapper.put(ACK.getId(), ACK);
         idToTypeMapper.put(USER_DATA.getId(), USER_DATA);
     }
 

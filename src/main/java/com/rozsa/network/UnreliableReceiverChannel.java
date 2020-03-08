@@ -1,6 +1,4 @@
-package com.rozsa.network.channel;
-
-import com.rozsa.network.IncomingMessagesQueue;
+package com.rozsa.network;
 
 class UnreliableReceiverChannel extends ReceiverChannel {
     UnreliableReceiverChannel(IncomingMessagesQueue incomingMessagesQueue) {

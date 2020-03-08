@@ -1,6 +1,5 @@
 package com.rozsa.network;
 
-import com.rozsa.network.channel.DeliveryMethod;
 import com.rozsa.network.message.DisconnectedMessage;
 
 import java.net.DatagramPacket;
@@ -34,6 +33,7 @@ public class PeerLoop extends Thread implements PacketSender {
         messageHandlers.put(MessageType.CONNECTION_CLOSED, new ConnectionClosedHandler(connHolder));
         messageHandlers.put(MessageType.PING, new PingMessageHandler(connHolder));
         messageHandlers.put(MessageType.PONG, new PongMessageHandler(connHolder));
+        messageHandlers.put(MessageType.ACK, new AckMessageHandler(connHolder));
         messageHandlers.put(MessageType.USER_DATA, new UserDataHandler(connHolder, incomingMessages));
     }
 
@@ -41,7 +41,6 @@ public class PeerLoop extends Thread implements PacketSender {
         while (isRunning) {
             try {
                 loop();
-//                Thread.sleep(1);
             } catch (Exception e) {
                 e.printStackTrace();
             }

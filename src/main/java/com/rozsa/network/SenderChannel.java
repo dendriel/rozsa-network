@@ -1,14 +1,15 @@
-package com.rozsa.network.channel;
+package com.rozsa.network;
 
-import com.rozsa.network.*;
+import com.rozsa.network.message.IncomingMessage;
 import com.rozsa.network.message.OutgoingMessage;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Supplier;
 
-public class SenderChannel extends BaseChannel {
-    private final ConcurrentLinkedQueue<OutgoingMessage> outgoingMessages;
-    private final PacketSender sender;
-    private final Address addr;
+abstract class SenderChannel extends BaseChannel {
+    protected final ConcurrentLinkedQueue<OutgoingMessage> outgoingMessages;
+    protected final PacketSender sender;
+    protected final Address addr;
 
     SenderChannel(DeliveryMethod type, Address addr, PacketSender sender) {
         super(type);
@@ -21,6 +22,8 @@ public class SenderChannel extends BaseChannel {
         outgoingMessages.add(msg);
     }
 
+    public abstract void enqueueAck(IncomingMessage ack);
+
     @Override
     public void update() {
         while(!outgoingMessages.isEmpty()) {
@@ -30,10 +33,12 @@ public class SenderChannel extends BaseChannel {
         }
     }
 
-    public static SenderChannel create(DeliveryMethod deliveryMethod, Address address, PacketSender sender) {
+    static SenderChannel create(DeliveryMethod deliveryMethod, Address address, PacketSender sender, Supplier<Long> latencyProvider) {
         switch (deliveryMethod) {
             case UNRELIABLE:
                 return new UnreliableSenderChannel(address, sender);
+            case RELIABLE:
+                return new ReliableSenderChannel(address, sender, NetConstants.ReliableWindowSize, NetConstants.MaxSeqNumbers, latencyProvider);
             default:
                 Logger.debug("Unhandled delivery method!! " + deliveryMethod);
                 return new UnreliableSenderChannel(address, sender);

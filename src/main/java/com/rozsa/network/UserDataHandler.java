@@ -1,6 +1,5 @@
 package com.rozsa.network;
 
-import com.rozsa.network.channel.DeliveryMethod;
 import com.rozsa.network.message.ConnectedMessage;
 import com.rozsa.network.message.IncomingUserDataMessage;
 
@@ -32,7 +31,7 @@ public class UserDataHandler implements IncomingMessageHandler {
                 connHolder.promoteConnection(conn);
                 incomingMessages.enqueue(new ConnectedMessage(conn));
             case CONNECTED:
-                IncomingUserDataMessage dataMessage = new IncomingUserDataMessage(conn, data, length);
+                IncomingUserDataMessage dataMessage = new IncomingUserDataMessage(conn, seqNumber, data, length);
                 conn.enqueueIncomingMessage(dataMessage, method);
                 break;
             case AWAITING_CONNECT_RESPONSE:
