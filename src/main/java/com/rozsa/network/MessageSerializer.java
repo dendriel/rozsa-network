@@ -16,29 +16,11 @@ class MessageSerializer {
         int bufIdx = 0;
         buf[bufIdx++] = type.getId();
         buf[bufIdx++] = method.getId();
-        buf[bufIdx++] = (byte)(seqNumber & 0xFF);
         buf[bufIdx++] = (byte)((seqNumber >> 8) & 0xFF);
+        buf[bufIdx++] = (byte)(seqNumber & 0xFF);
 
         System.arraycopy(data, 0, buf, bufIdx, dataLen);
 
         return buf;
-    }
-
-    static byte[] getBuffer(CachedMemory cachedMemory, int dataLen) {
-        int bufferSize = dataLen + NetConstants.MsgHeaderSize;
-        return cachedMemory.allocBuffer(bufferSize);
-    }
-
-    static void encondeHeader(MessageType type, DeliveryMethod method, short seqNumber, byte[] data) {
-        if (data.length < NetConstants.MsgHeaderSize) {
-            Logger.error("Buffer size is not enough to encode message header.");
-            return;
-        }
-
-        int bufIdx = 0;
-        data[bufIdx++] = type.getId();
-        data[bufIdx++] = method.getId();
-        data[bufIdx++] = (byte)(seqNumber & 0xFF);
-        data[bufIdx++] = (byte)((seqNumber >> 8) & 0xFF);
     }
 }

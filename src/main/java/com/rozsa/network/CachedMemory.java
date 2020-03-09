@@ -11,7 +11,6 @@ class CachedMemory {
 
     private ReentrantLock bufCacheLock;
     private List<byte[]> bufCache;
-    private int bufCacheCount;
 
     CachedMemory(int maxBufCacheCount) {
         this.maxBufCacheCount = maxBufCacheCount;
@@ -31,7 +30,6 @@ class CachedMemory {
                 }
                 byte[] buf = bufCache.get(i);
                 bufCache.remove(i);
-                bufCacheCount--;
                 return buf;
             }
         } finally {

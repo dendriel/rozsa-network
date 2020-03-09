@@ -3,10 +3,7 @@ package com.rozsa.network;
 import com.rozsa.network.message.IncomingMessage;
 import com.rozsa.network.message.IncomingMessageType;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 class ReliableReceiverChannel extends ReceiverChannel {
     private final Address addr;
@@ -46,30 +43,29 @@ class ReliableReceiverChannel extends ReceiverChannel {
     }
 
     private void sendAcks() {
-        if (acksToSend.size() == 0) {
+        if (acksToSend.isEmpty()) {
             return;
         }
 
-        int payloadSize = (acksToSend.size() - 1) * 2;
-        byte[] acks = cachedMemory.allocBuffer(payloadSize);
-        int idx = 0;
-        Short seqNumber = -1;
-        for (Short ack : acksToSend) {
-            // encode first ack into sequence number bytes.
-            if (seqNumber == -1) {
-                seqNumber = ack;
-                continue;
-            }
+        int payloadSize = (acksToSend.size() - 1) * 2 + NetConstants.MsgHeaderSize;
+        byte[] buf = cachedMemory.allocBuffer(payloadSize);
 
-            int ackIdx = idx * 2;
-            acks[ackIdx++] = (byte)((ack >> 8) & 0xFF);
-            acks[ackIdx] = (byte)(ack & 0xFF);
-            idx++;
+        int bufIdx = 0;
+        buf[bufIdx++] = MessageType.ACK.getId();
+        buf[bufIdx++] = DeliveryMethod.RELIABLE.getId();
+
+        Iterator<Short> acksIt = acksToSend.iterator();
+        Short seqNumber = acksIt.next();
+        buf[bufIdx++] = (byte)((seqNumber >> 8) & 0xFF);
+        buf[bufIdx++] = (byte)(seqNumber & 0xFF);
+
+        while (acksIt.hasNext()) {
+            Short ack = acksIt.next();
+            buf[bufIdx++] = (byte)((ack >> 8) & 0xFF);
+            buf[bufIdx++] = (byte)(ack & 0xFF);
         }
 
-        // TODO: finalize cache memory change.
-        byte[] buf = MessageSerializer.serialize(MessageType.ACK, DeliveryMethod.RELIABLE, seqNumber, acks, payloadSize);
-        sender.send(addr, buf, buf.length);
+        sender.send(addr, buf, bufIdx);
     }
 
     private void handleIncomingMessage(IncomingMessage message) {

@@ -129,8 +129,8 @@ public class PeerLoop extends Thread implements PacketSender {
         // deserialize header
         MessageType type = MessageType.from(buf[dataIdx++]);
         DeliveryMethod method = DeliveryMethod.from(buf[dataIdx++]);
-        int seqNumber = (buf[dataIdx++] & 0xFF);
-        seqNumber = (seqNumber | (buf[dataIdx++] & 0xFF) << 8);
+        int seqNumber = (buf[dataIdx++] & 0xFF) << 8;
+        seqNumber = seqNumber | (buf[dataIdx++] & 0xFF);
 
         // deserialize data
         int dataLen = length - dataIdx;

@@ -61,10 +61,9 @@ class ReliableSenderChannel extends SenderChannel {
 
             byte[] receivedAcks = ack.getData();
             for (int i = 0; i < (ack.getLength() / 2); i++) {
-
                 int ackIdx = i * 2;
-                short ackNumber = (short)(receivedAcks[ackIdx++] & 0xff);
-                ackNumber = (short)((ackNumber << 8) | (receivedAcks[ackIdx] & 0xff));
+                short ackNumber = (short)((receivedAcks[ackIdx++] & 0xff) << 8);
+                ackNumber = (short)(ackNumber | (receivedAcks[ackIdx] & 0xff));
                 ackNumber = (short)(ackNumber % windowSize);
                 handleAck(ackNumber);
             }
