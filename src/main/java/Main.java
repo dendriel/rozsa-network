@@ -16,7 +16,7 @@ public class Main {
     public static void main(String[] args) throws SocketException, NotActiveException, UnknownHostException, InterruptedException {
         int serverPort = 9090;
         int clientPort = 8989;
-        isServer = true;
+//        isServer = true;
 
         int targetPort = isServer ? serverPort : clientPort;
 
@@ -52,7 +52,7 @@ public class Main {
     }
 
     static void sendReliable(Connection conn) {
-        int count = 2048;
+        int count = 512;
 
         try {
             Thread.sleep(3000);

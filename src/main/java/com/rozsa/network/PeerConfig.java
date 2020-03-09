@@ -81,4 +81,6 @@ public class PeerConfig {
     public void setPingUpdatedEventEnabled(boolean pingUpdatedEventEnabled) {
         this.isPingUpdatedEventEnabled = pingUpdatedEventEnabled;
     }
+
+
 }

@@ -56,29 +56,36 @@ class ReliableSenderChannel extends SenderChannel {
     private void handleAcks() {
         while (incomingAcks.size() > 0) {
             IncomingMessage ack = incomingAcks.poll();
-            short ackNumber = (short)(ack.getSeqNumber() % windowSize);
 
-            if (ackNumber == windowStart) {
-                storedMessages[ackNumber].reset();
-                // clear received acks.
-                do {
-//                    Logger.debug("Released ack number %d", windowStart);
-                    acks[windowStart] = false;
-                    windowStart = (short)((windowStart + 1) % windowSize);
-                } while (acks[windowStart]);
+            handleAck((short)(ack.getSeqNumber() % windowSize));
+
+            byte[] receivedAcks = ack.getData();
+            for (int i = 0; i < (receivedAcks.length / 2); i++) {
+
+                int ackIdx = i * 2;
+                short ackNumber = (short)(receivedAcks[ackIdx++] & 0xff);
+                ackNumber = (short)((ackNumber << 8) | (receivedAcks[ackIdx] & 0xff));
+                ackNumber = (short)(ackNumber % windowSize);
+                handleAck(ackNumber);
             }
-            else if (windowStart <= (windowSize / 2) && ackNumber > (windowSize / 2)) {
-//                Logger.debug("Received unexpected ack number. Different half. Ack: %d, Exp: %d  ", ackNumber, windowStart);
-                return;
-            }
-            else if (ackNumber > windowStart) {
-                storedMessages[ackNumber].reset();
-                acks[ackNumber] = true;
-//                Logger.debug("Received ack higher than expected. Ack %d; Exp %d", ackNumber, windowStart);
-            }
-            else {
-//                Logger.debug("Received unexpected ack number. Ack: %d, Exp: %d  ", ackNumber, windowStart);
-            }
+        }
+    }
+
+    private void handleAck(short ackNumber) {
+        if (ackNumber == windowStart) {
+            storedMessages[ackNumber].reset();
+            // clear received acks.
+            do {
+                acks[windowStart] = false;
+                windowStart = (short)((windowStart + 1) % windowSize);
+            } while (acks[windowStart]);
+        }
+        else if (windowStart <= (windowSize / 2) && ackNumber > (windowSize / 2)) {
+            return;
+        }
+        else if (ackNumber > windowStart) {
+            storedMessages[ackNumber].reset();
+            acks[ackNumber] = true;
         }
     }
 

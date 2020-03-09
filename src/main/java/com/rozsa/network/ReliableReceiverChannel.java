@@ -38,12 +38,30 @@ class ReliableReceiverChannel extends ReceiverChannel {
     }
 
     private void sendAcks() {
-        // TODO TODO send all acks in a single message.
-        acksToSend.forEach(ack -> {
-            byte[] data = MessageSerializer.serialize(MessageType.ACK, DeliveryMethod.RELIABLE, ack);
-            sender.send(addr, data, data.length);
-//            Logger.debug("Sent ack %d", ack);
-        });
+        if (acksToSend.size() == 0) {
+            return;
+        }
+
+        int payloadSize = (acksToSend.size() - 1) * 2;
+        byte[] acks = new byte[payloadSize];
+        int idx = 0;
+        Short seqNumber = -1;
+        for (Short ack : acksToSend) {
+            // encode first ack into sequence number bytes.
+            if (seqNumber == -1) {
+                seqNumber = ack;
+                continue;
+            }
+
+            int ackIdx = idx * 2;
+            acks[ackIdx++] = (byte)((ack >> 8) & 0xFF);
+            acks[ackIdx] = (byte)(ack & 0xFF);
+            idx++;
+        }
+
+        // lets throw away the default seq number bytes for now.
+        byte[] buf = MessageSerializer.serialize(MessageType.ACK, DeliveryMethod.RELIABLE, seqNumber, acks, acks.length);
+        sender.send(addr, buf, buf.length);
     }
 
     private void handleIncomingMessage(IncomingMessage message) {

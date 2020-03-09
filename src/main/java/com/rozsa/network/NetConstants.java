@@ -10,6 +10,10 @@ class NetConstants {
 
     static final short MaxSeqNumbers = 1024;
     static final short ReliableWindowSize = 64;
+    /**
+     * Maximum number of messages peer loop will receive in a single interaction.
+     */
+    static final short ReceiveMessagesThreshold = 128;
 
     static final int DefaultMaximumHandshakeAttempts = 5;
     static final long DefaultIntervalBetweenHandshakesInMillis = 1000;

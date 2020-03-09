@@ -22,7 +22,7 @@ public class Peer {
 
         incomingMessages = new PeerIncomingMessagesQueue();
         connHolder = new ConnectionHolder(config, incomingMessages);
-        peerLoop = new PeerLoop(connHolder, incomingMessages, config);
+        peerLoop = new PeerLoop(connHolder, incomingMessages, config, NetConstants.ReceiveMessagesThreshold);
         connHolder.setPacketSender(peerLoop);
 
         isInitialized = false;

@@ -10,15 +10,18 @@ public class PeerLoop extends Thread implements PacketSender {
     private final UDPSocket udpSocket;
     private final ConnectionHolder connHolder;
     private final IncomingMessagesQueue incomingMessages;
-    private EnumMap<MessageType, IncomingMessageHandler> messageHandlers;
+    private final int recvMessagesThreshold;
 
+    private EnumMap<MessageType, IncomingMessageHandler> messageHandlers;
     private volatile boolean isRunning;
 
-    PeerLoop(ConnectionHolder connHolder, IncomingMessagesQueue incomingMessages, PeerConfig config) throws SocketException {
+    PeerLoop(ConnectionHolder connHolder, IncomingMessagesQueue incomingMessages, PeerConfig config, int recvMessagesThreshold) throws SocketException {
         this.connHolder = connHolder;
         this.incomingMessages = incomingMessages;
         isRunning = true;
         initializeHandlers();
+
+        this.recvMessagesThreshold = recvMessagesThreshold;
 
         udpSocket = new UDPSocket(config.getPort(), 1, config.getReceiveBufferSize());
     }
@@ -48,7 +51,11 @@ public class PeerLoop extends Thread implements PacketSender {
     }
 
     private void loop() {
-        receivePackets();
+        int currRecvMsgsCount = 0;
+        boolean noMoreMessages;
+        do {
+            noMoreMessages = receivePackets();
+        } while (!noMoreMessages && ++currRecvMsgsCount < recvMessagesThreshold);
 
         connHolder.getHandshakes().forEach(this::expireHandshakes);
         connHolder.getHandshakes().forEach(Connection::handshake);
@@ -92,11 +99,15 @@ public class PeerLoop extends Thread implements PacketSender {
         }
     }
 
-    private void receivePackets() {
+    /**
+     * Read a message from socket.
+     * @return true if socket timeout occurred and there is no more messages to read right now; false otherwise.
+     */
+    private boolean receivePackets() {
         DatagramPacket packet = udpSocket.receive();
         if (packet == null) {
             // Socket timeout. It won't burn the CPU.
-            return;
+            return true;
         }
 
         Address addr = Address.from(packet.getAddress(), packet.getPort());
@@ -104,7 +115,7 @@ public class PeerLoop extends Thread implements PacketSender {
         byte[] buf = packet.getData();
         int length = packet.getLength();
         if (length <= 0) {
-            return;
+            return false;
         }
 
         // deserialize header
@@ -121,5 +132,7 @@ public class PeerLoop extends Thread implements PacketSender {
 
         IncomingMessageHandler handler = messageHandlers.getOrDefault(type, new UnknownMessageHandler());
         handler.handle(addr, method, (short)seqNumber, data, data.length);
+
+        return false;
     }
 }
