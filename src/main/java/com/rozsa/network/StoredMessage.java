@@ -1,23 +1,20 @@
 package com.rozsa.network;
 
-import com.rozsa.network.message.OutgoingMessage;
-
 class StoredMessage {
     private boolean isValid;
-    private OutgoingMessage message;
     private long sentTime;
-    private short seqNumber;
+    private byte[] encodedMsg;
+    private int encodedMsgLength;
 
     void reset() {
-        message = null;
+        encodedMsg = null;
         sentTime = 0;
-        seqNumber = -1;
         isValid = false;
     }
 
-    void set(OutgoingMessage message, short seqNumber) {
-        this.message = message;
-        this.seqNumber = seqNumber;
+    void set(byte[] encodedMsg, int encodedMsgLength) {
+        this.encodedMsg = encodedMsg;
+        this.encodedMsgLength = encodedMsgLength;
         this.sentTime = Clock.getCurrentTimeInNanos();
         isValid = true;
     }
@@ -27,15 +24,14 @@ class StoredMessage {
     }
 
     boolean isTimeout(long timeoutTime) {
-//        Logger.debug("SEQ %d isTimeout? %d > %d - %s", seqNumber, Clock.getTimePassedSinceInNanos(sentTime), timeoutTime, Clock.getTimePassedSinceInNanos(sentTime) > timeoutTime);
         return isValid && Clock.getTimePassedSinceInNanos(sentTime) > timeoutTime;
     }
 
-    OutgoingMessage getMessage() {
-        return message;
+    byte[] getEncodedMsg() {
+        return encodedMsg;
     }
 
-    public short getSeqNumber() {
-        return seqNumber;
+    int getEncodedMsgLength() {
+        return encodedMsgLength;
     }
 }

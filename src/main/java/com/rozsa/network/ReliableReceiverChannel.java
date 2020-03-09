@@ -21,7 +21,7 @@ class ReliableReceiverChannel extends ReceiverChannel {
             IncomingMessagesQueue incomingMessagesQueue,
             CachedMemory cachedMemory,
             short maxSeqNumber) {
-        super(DeliveryMethod.RELIABLE, incomingMessagesQueue);
+        super(DeliveryMethod.RELIABLE, incomingMessagesQueue, cachedMemory);
         this.addr = addr;
         this.sender = sender;
         this.cachedMemory = cachedMemory;
@@ -65,12 +65,12 @@ class ReliableReceiverChannel extends ReceiverChannel {
             buf[bufIdx++] = (byte)(ack & 0xFF);
         }
 
-        sender.send(addr, buf, bufIdx);
+        sender.send(addr, buf, bufIdx, true);
     }
 
     private void handleIncomingMessage(IncomingMessage message) {
         if (message.getType() != IncomingMessageType.USER_DATA) {
-//            Logger.error("Unhandled channel message received: %s", message.getType());
+            cachedMemory.freeBuffer(message.getData());
             return;
         }
 

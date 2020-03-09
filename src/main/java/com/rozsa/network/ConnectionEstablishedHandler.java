@@ -2,15 +2,18 @@ package com.rozsa.network;
 
 import com.rozsa.network.message.ConnectedMessage;
 
-public class ConnectionEstablishedHandler implements IncomingMessageHandler {
+class ConnectionEstablishedHandler implements IncomingMessageHandler {
     private final ConnectionHolder connHolder;
+    private final CachedMemory cachedMemory;
     private final IncomingMessagesQueue incomingMessages;
 
-    public ConnectionEstablishedHandler(
+    ConnectionEstablishedHandler(
             ConnectionHolder connHolder,
+            CachedMemory cachedMemory,
             IncomingMessagesQueue incomingMessages
     ) {
         this.connHolder = connHolder;
+        this.cachedMemory = cachedMemory;
         this.incomingMessages = incomingMessages;
     }
 
@@ -20,6 +23,8 @@ public class ConnectionEstablishedHandler implements IncomingMessageHandler {
         if (conn == null) {
             conn = connHolder.createAsIncomingHandshake(addr);
         }
+
+        cachedMemory.freeBuffer(data);
 
         switch (conn.getState()) {
             case AWAITING_CONNECT_RESPONSE:

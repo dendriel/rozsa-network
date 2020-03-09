@@ -16,7 +16,7 @@ public class Main {
     public static void main(String[] args) throws SocketException, NotActiveException, UnknownHostException, InterruptedException {
         int serverPort = 9090;
         int clientPort = 8989;
-//        isServer = true;
+        isServer = true;
 
         int targetPort = isServer ? serverPort : clientPort;
 
@@ -74,8 +74,9 @@ public class Main {
         System.out.println("Disconnected from " + msg.getConnection() + " reason: " + msg.getReason());
     }
 
+    private static boolean keepLooping = true;
     private static void loop() throws InterruptedException {
-        while (true) {
+        while (keepLooping) {
             if (peer.getIncomingMessagesCount() == 0) {
                 Thread.sleep(1);
                 continue;
@@ -88,7 +89,9 @@ public class Main {
             }
 
 //            System.out.println("Received message \"" + new String(msg.getData()) + "\" " + " from " + msg.getConnection());
-            System.out.println("Received message \"" + new String(msg.getData()) + "\"");
+            byte[] buf = new byte[msg.getLength()];
+            System.arraycopy(msg.getData(), 0, buf, 0, buf.length);
+            System.out.println("Received message \"" + new String(buf) + "\"");
 //            peer.disconnect(msg.getConnection());
         }
     }

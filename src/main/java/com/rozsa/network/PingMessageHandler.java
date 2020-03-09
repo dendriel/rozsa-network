@@ -1,12 +1,13 @@
 package com.rozsa.network;
 
-public class PingMessageHandler implements IncomingMessageHandler {
+class PingMessageHandler implements IncomingMessageHandler {
     private final ConnectionHolder connHolder;
+    private final CachedMemory cachedMemory;
 
-    public PingMessageHandler(ConnectionHolder connHolder) {
+    PingMessageHandler(ConnectionHolder connHolder, CachedMemory cachedMemory) {
         this.connHolder = connHolder;
+        this.cachedMemory = cachedMemory;
     }
-
 
     @Override
     public void handle(Address addr, DeliveryMethod deliveryMethod, short seqNumber, byte[] data, int length) {
@@ -15,6 +16,8 @@ public class PingMessageHandler implements IncomingMessageHandler {
             Logger.warn("Received ping from unconnected source %s.", addr);
             return;
         }
+
+        cachedMemory.freeBuffer(data);
 
         switch (conn.getState()) {
             case AWAITING_CONNECT_RESPONSE:
@@ -27,7 +30,6 @@ public class PingMessageHandler implements IncomingMessageHandler {
                 break;
             case DISCONNECTED:
                 Logger.warn("Already disconnected from source %s. Won't process the ping.", addr);
-                break;
             default:
                 break;
         }

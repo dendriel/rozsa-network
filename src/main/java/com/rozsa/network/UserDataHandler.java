@@ -3,15 +3,18 @@ package com.rozsa.network;
 import com.rozsa.network.message.ConnectedMessage;
 import com.rozsa.network.message.IncomingUserDataMessage;
 
-public class UserDataHandler implements IncomingMessageHandler {
+class UserDataHandler implements IncomingMessageHandler {
     private final ConnectionHolder connHolder;
+    private final CachedMemory cachedMemory;
     private final IncomingMessagesQueue incomingMessages;
 
-    public UserDataHandler(
+    UserDataHandler(
             ConnectionHolder connHolder,
+            CachedMemory cachedMemory,
             IncomingMessagesQueue incomingMessages
     ) {
         this.connHolder = connHolder;
+        this.cachedMemory = cachedMemory;
         this.incomingMessages = incomingMessages;
     }
 
@@ -39,6 +42,7 @@ public class UserDataHandler implements IncomingMessageHandler {
             case DISCONNECTED:
                 Logger.warn("Received user data from %s but isn't connected yet.", conn);
             default:
+                cachedMemory.freeBuffer(data);
                 break;
         }
     }

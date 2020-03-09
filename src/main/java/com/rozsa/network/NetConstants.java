@@ -7,6 +7,8 @@ class NetConstants {
      * 2 bytes - sequence number
      */
     static final int MsgHeaderSize = 4;
+    static final int MessageTypeHeaderIdx = 0;
+    static final int DeliveryMethodHeaderIdx = 1;
 
     static final short MaxSeqNumbers = 1024;
     static final short ReliableWindowSize = 64;

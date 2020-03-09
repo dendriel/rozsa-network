@@ -118,7 +118,7 @@ public class Connection {
     }
 
     private SenderChannel createSenderChannel(DeliveryMethod deliveryMethod) {
-        return SenderChannel.create(deliveryMethod, address, sender, heartbeat::getResendDelay);
+        return SenderChannel.create(deliveryMethod, address, sender, cachedMemory, heartbeat::getResendDelay);
     }
 
     private ReceiverChannel getOrCreateReceiverChannel(DeliveryMethod deliveryMethod) {
@@ -176,8 +176,7 @@ public class Connection {
             return;
         }
 
-        byte[] data = MessageSerializer.serialize(MessageType.CONNECTION_REQUEST);
-        sender.send(address, data, data.length);
+        sender.sendProtocol(address, MessageType.CONNECTION_REQUEST, DeliveryMethod.UNRELIABLE, (short)0);
 
         state = AWAITING_CONNECT_RESPONSE;
 

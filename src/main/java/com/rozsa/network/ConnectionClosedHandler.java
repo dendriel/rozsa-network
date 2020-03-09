@@ -1,10 +1,12 @@
 package com.rozsa.network;
 
-public class ConnectionClosedHandler implements IncomingMessageHandler {
+class ConnectionClosedHandler implements IncomingMessageHandler {
     private final ConnectionHolder connHolder;
+    private final CachedMemory cachedMemory;
 
-    public ConnectionClosedHandler(ConnectionHolder connHolder) {
+    ConnectionClosedHandler(ConnectionHolder connHolder, CachedMemory cachedMemory) {
         this.connHolder = connHolder;
+        this.cachedMemory = cachedMemory;
     }
 
     @Override
@@ -14,6 +16,8 @@ public class ConnectionClosedHandler implements IncomingMessageHandler {
             Logger.warn("Received closed message from unconnected source %s.", addr);
             return;
         }
+
+        cachedMemory.freeBuffer(data);
 
         switch (conn.getState()) {
             case AWAITING_CONNECT_RESPONSE:
@@ -26,7 +30,7 @@ public class ConnectionClosedHandler implements IncomingMessageHandler {
                 conn.setState(ConnectionState.DISCONNECTED);
                 break;
             case DISCONNECTED:
-                Logger.debug("Already disconnected from %s.", conn);
+                Logger.warn("Already disconnected from %s.", conn);
             default:
                 break;
         }

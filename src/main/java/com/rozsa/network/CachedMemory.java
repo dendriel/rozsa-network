@@ -40,6 +40,10 @@ class CachedMemory {
     }
 
     void freeBuffer(byte[] buf) {
+        if (buf.length == 0) {
+            return;
+        }
+
         bufCacheLock.lock();
         try {
             if (bufCache.size() >= maxBufCacheCount) {

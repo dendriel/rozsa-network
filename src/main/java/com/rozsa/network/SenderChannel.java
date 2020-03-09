@@ -4,18 +4,26 @@ import com.rozsa.network.message.IncomingMessage;
 import com.rozsa.network.message.OutgoingMessage;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
-abstract class SenderChannel extends BaseChannel {
+abstract class SenderChannel {
+    protected final DeliveryMethod type;
     protected final ConcurrentLinkedQueue<OutgoingMessage> outgoingMessages;
     protected final PacketSender sender;
     protected final Address addr;
+    protected final CachedMemory cachedMemory;
 
-    SenderChannel(DeliveryMethod type, Address addr, PacketSender sender) {
-        super(type);
+    SenderChannel(DeliveryMethod type, Address addr, PacketSender sender, CachedMemory cachedMemory) {
+        this.type = type;
         this.sender = sender;
         this.addr = addr;
+        this.cachedMemory = cachedMemory;
         outgoingMessages = new ConcurrentLinkedQueue<>();
+    }
+
+    public DeliveryMethod getType() {
+        return type;
     }
 
     public void enqueue(OutgoingMessage msg) {
@@ -24,24 +32,40 @@ abstract class SenderChannel extends BaseChannel {
 
     public abstract void enqueueAck(IncomingMessage ack);
 
-    @Override
     public void update() {
         while(!outgoingMessages.isEmpty()) {
             OutgoingMessage msg = outgoingMessages.poll();
-            byte[] buf = MessageSerializer.serialize(MessageType.USER_DATA, type, (short)0, msg.getData(), msg.getDataLength());
-            sender.send(addr, buf, buf.length);
+
+            int bufSize = msg.getDataLength() + NetConstants.MsgHeaderSize;
+            byte[] buf = cachedMemory.allocBuffer(bufSize);
+            int bufIdx = 0;
+            buf[bufIdx++] = MessageType.USER_DATA.getId();
+            buf[bufIdx++] = type.getId();
+            buf[bufIdx++] = 0;
+            buf[bufIdx++] = 0;
+
+            System.arraycopy(msg.getData(), 0, buf, bufIdx, msg.getDataLength());
+            cachedMemory.freeBuffer(msg.getData());
+
+            sender.send(addr, buf, bufSize, true);
         }
     }
 
-    static SenderChannel create(DeliveryMethod deliveryMethod, Address address, PacketSender sender, Supplier<Long> latencyProvider) {
+    static SenderChannel create(
+            DeliveryMethod deliveryMethod,
+            Address address,
+            PacketSender sender,
+            CachedMemory cachedMemory,
+            LongSupplier latencyProvider
+    ) {
         switch (deliveryMethod) {
             case UNRELIABLE:
-                return new UnreliableSenderChannel(address, sender);
+                return new UnreliableSenderChannel(address, sender, cachedMemory);
             case RELIABLE:
-                return new ReliableSenderChannel(address, sender, NetConstants.ReliableWindowSize, NetConstants.MaxSeqNumbers, latencyProvider);
+                return new ReliableSenderChannel(address, sender, cachedMemory, NetConstants.ReliableWindowSize, NetConstants.MaxSeqNumbers, latencyProvider);
             default:
                 Logger.debug("Unhandled delivery method!! " + deliveryMethod);
-                return new UnreliableSenderChannel(address, sender);
+                return new UnreliableSenderChannel(address, sender, cachedMemory);
         }
     }
 }
