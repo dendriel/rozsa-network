@@ -37,12 +37,18 @@ public class ReceiverChannel extends BaseChannel {
     }
 
 
-    public static ReceiverChannel create(DeliveryMethod deliveryMethod, Address address, PacketSender sender, IncomingMessagesQueue incomingMessagesQueue) {
+    public static ReceiverChannel create(
+            DeliveryMethod deliveryMethod,
+            Address address,
+            PacketSender sender,
+            IncomingMessagesQueue incomingMessagesQueue,
+            CachedMemory cachedMemory
+    ) {
         switch (deliveryMethod) {
             case UNRELIABLE:
                 return new UnreliableReceiverChannel(incomingMessagesQueue);
             case RELIABLE:
-                return new ReliableReceiverChannel(address, sender, incomingMessagesQueue, NetConstants.MaxSeqNumbers);
+                return new ReliableReceiverChannel(address, sender, incomingMessagesQueue, cachedMemory, NetConstants.MaxSeqNumbers);
             default:
                 Logger.debug("Unhandled delivery method!! " + deliveryMethod);
                 return new UnreliableReceiverChannel(incomingMessagesQueue);

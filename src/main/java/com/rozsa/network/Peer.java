@@ -14,6 +14,7 @@ public class Peer {
     private final ConnectionHolder connHolder;
     private final IncomingMessagesQueue incomingMessages;
     private final PeerLoop peerLoop;
+    private final CachedMemory cachedMemory;
 
     private boolean isInitialized;
 
@@ -21,8 +22,9 @@ public class Peer {
         this.config = config;
 
         incomingMessages = new PeerIncomingMessagesQueue();
-        connHolder = new ConnectionHolder(config, incomingMessages);
-        peerLoop = new PeerLoop(connHolder, incomingMessages, config, NetConstants.ReceiveMessagesThreshold);
+        cachedMemory = new CachedMemory(config.getMaxCachedBufferCount());
+        connHolder = new ConnectionHolder(config, incomingMessages, cachedMemory);
+        peerLoop = new PeerLoop(connHolder, incomingMessages, cachedMemory, config, NetConstants.ReceiveMessagesThreshold);
         connHolder.setPacketSender(peerLoop);
 
         isInitialized = false;

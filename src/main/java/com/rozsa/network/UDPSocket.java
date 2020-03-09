@@ -5,14 +5,15 @@ import java.net.*;
 import java.util.Arrays;
 
 class UDPSocket {
-    private DatagramSocket socket;
+    private final DatagramSocket socket;
+    private final CachedMemory cachedMemory;
+    private final byte[] buf;
 
-    private byte[] buf;
-
-    UDPSocket(int port, int pollTimeInMillis, int recvBufferSize) throws SocketException {
+    UDPSocket(int port, int pollTimeInMillis, int recvBufferSize, CachedMemory cachedMemory) throws SocketException {
         socket = new DatagramSocket(port);
         socket.setSoTimeout(pollTimeInMillis);
         buf = new byte[recvBufferSize];
+        this.cachedMemory = cachedMemory;
 
         Logger.info("Socket bound at %s:%d", socket.getLocalAddress().getHostAddress(), socket.getLocalPort());
     }
@@ -24,6 +25,8 @@ class UDPSocket {
             socket.send(packet);
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            cachedMemory.freeBuffer(data);
         }
     }
 

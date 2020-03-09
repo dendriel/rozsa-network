@@ -21,4 +21,6 @@ class NetConstants {
     static final float DefaultPingInterval = 1;
     static final float DefaultConnectionTimeout = 5;
     static final boolean DefaultIsPingUpdatedEventEnabled = false;
+
+    static final int DefaultMaxCachedBufferCount = 512;
 }

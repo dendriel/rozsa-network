@@ -13,6 +13,7 @@ public class Connection {
     private final Address address;
     private final PacketSender sender;
     private final IncomingMessagesQueue incomingMessages;
+    private final CachedMemory cachedMemory;
     private final ConnectionHeartbeat heartbeat;
     private final long maximumHandshakeWaitingTime;
 
@@ -27,11 +28,12 @@ public class Connection {
     private ConcurrentHashMap<DeliveryMethod, ReceiverChannel> receiverChannels;
 
 
-    Connection(PeerConfig config, Address address, PacketSender sender, IncomingMessagesQueue incomingMessages) {
+    Connection(PeerConfig config, Address address, PacketSender sender, IncomingMessagesQueue incomingMessages, CachedMemory cachedMemory) {
         this.config = config;
         this.address = address;
         this.sender = sender;
         this.incomingMessages = incomingMessages;
+        this.cachedMemory = cachedMemory;
 
         maximumHandshakeWaitingTime = config.getMaximumHandshakeAttempts() * config.getIntervalBetweenHandshakes();
         state = ConnectionState.DISCONNECTED;
@@ -125,7 +127,7 @@ public class Connection {
     }
 
     private ReceiverChannel createReceiverChannel(DeliveryMethod deliveryMethod) {
-        return ReceiverChannel.create(deliveryMethod, address, sender, incomingMessages);
+        return ReceiverChannel.create(deliveryMethod, address, sender, incomingMessages, cachedMemory);
     }
 
     void pingReceived(short seqNumber) {

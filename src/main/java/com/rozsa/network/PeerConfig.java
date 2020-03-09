@@ -9,6 +9,7 @@ public class PeerConfig {
     private float pingInterval;
     private float connectionTimeout;
     private boolean isPingUpdatedEventEnabled;
+    private int maxCachedBufferCount;
 
     public PeerConfig() {
         this(0);
@@ -24,6 +25,8 @@ public class PeerConfig {
         isPingUpdatedEventEnabled = NetConstants.DefaultIsPingUpdatedEventEnabled;
 
         receiveBufferSize = NetConstants.DefaultReceiveBufferSize;
+
+        maxCachedBufferCount = NetConstants.DefaultMaxCachedBufferCount;
     }
 
     public int getPort() {
@@ -82,5 +85,11 @@ public class PeerConfig {
         this.isPingUpdatedEventEnabled = pingUpdatedEventEnabled;
     }
 
+    public int getMaxCachedBufferCount() {
+        return maxCachedBufferCount;
+    }
 
+    public void setMaxCachedBufferCount(int maxCachedBufferCount) {
+        this.maxCachedBufferCount = maxCachedBufferCount;
+    }
 }

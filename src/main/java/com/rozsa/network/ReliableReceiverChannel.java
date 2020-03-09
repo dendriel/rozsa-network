@@ -11,15 +11,23 @@ import java.util.Set;
 class ReliableReceiverChannel extends ReceiverChannel {
     private final Address addr;
     private final PacketSender sender;
+    private final CachedMemory cachedMemory;
+    private final Map<Short, IncomingMessage> withholdSeqNumbers;
+    private final Set<Short> acksToSend;
+
     private short expectedSeqNumber;
     private short maxSeqNumber;
-    private Map<Short, IncomingMessage> withholdSeqNumbers;
-    private Set<Short> acksToSend;
 
-    ReliableReceiverChannel(Address addr, PacketSender sender, IncomingMessagesQueue incomingMessagesQueue, short maxSeqNumber) {
+    ReliableReceiverChannel(
+            Address addr,
+            PacketSender sender,
+            IncomingMessagesQueue incomingMessagesQueue,
+            CachedMemory cachedMemory,
+            short maxSeqNumber) {
         super(DeliveryMethod.RELIABLE, incomingMessagesQueue);
         this.addr = addr;
         this.sender = sender;
+        this.cachedMemory = cachedMemory;
         this.maxSeqNumber = maxSeqNumber;
 
         expectedSeqNumber = 0;
@@ -43,7 +51,7 @@ class ReliableReceiverChannel extends ReceiverChannel {
         }
 
         int payloadSize = (acksToSend.size() - 1) * 2;
-        byte[] acks = new byte[payloadSize];
+        byte[] acks = cachedMemory.allocBuffer(payloadSize);
         int idx = 0;
         Short seqNumber = -1;
         for (Short ack : acksToSend) {
@@ -59,8 +67,8 @@ class ReliableReceiverChannel extends ReceiverChannel {
             idx++;
         }
 
-        // lets throw away the default seq number bytes for now.
-        byte[] buf = MessageSerializer.serialize(MessageType.ACK, DeliveryMethod.RELIABLE, seqNumber, acks, acks.length);
+        // TODO: finalize cache memory change.
+        byte[] buf = MessageSerializer.serialize(MessageType.ACK, DeliveryMethod.RELIABLE, seqNumber, acks, payloadSize);
         sender.send(addr, buf, buf.length);
     }
 

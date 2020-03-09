@@ -54,13 +54,13 @@ class ReliableSenderChannel extends SenderChannel {
     }
 
     private void handleAcks() {
-        while (incomingAcks.size() > 0) {
+        while (!incomingAcks.isEmpty()) {
             IncomingMessage ack = incomingAcks.poll();
 
             handleAck((short)(ack.getSeqNumber() % windowSize));
 
             byte[] receivedAcks = ack.getData();
-            for (int i = 0; i < (receivedAcks.length / 2); i++) {
+            for (int i = 0; i < (ack.getLength() / 2); i++) {
 
                 int ackIdx = i * 2;
                 short ackNumber = (short)(receivedAcks[ackIdx++] & 0xff);

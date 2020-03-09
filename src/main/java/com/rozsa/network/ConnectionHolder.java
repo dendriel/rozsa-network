@@ -6,14 +6,16 @@ import java.util.concurrent.ConcurrentHashMap;
 class ConnectionHolder {
     private final PeerConfig config;
     private final IncomingMessagesQueue incomingMessages;
+    private final CachedMemory cachedMemory;
     private final ConcurrentHashMap<Long, Connection> handshakes;
     private final ConcurrentHashMap<Long, Connection> connections;
 
     private PacketSender sender;
 
-    ConnectionHolder(PeerConfig config, IncomingMessagesQueue incomingMessages) {
+    ConnectionHolder(PeerConfig config, IncomingMessagesQueue incomingMessages, CachedMemory cachedMemory) {
         this.config = config;
         this.incomingMessages = incomingMessages;
+        this.cachedMemory = cachedMemory;
         handshakes = new ConcurrentHashMap<>();
         connections = new ConcurrentHashMap<>();
     }
@@ -55,7 +57,7 @@ class ConnectionHolder {
     }
 
     private Connection createAsHandshake(Address addr, ConnectionState state) {
-        Connection handshake = new Connection(config, addr, sender, incomingMessages);
+        Connection handshake = new Connection(config, addr, sender, incomingMessages, cachedMemory);
         handshake.setState(state);
         handshakes.put(addr.getId(), handshake);
         return handshake;

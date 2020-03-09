@@ -10,20 +10,28 @@ public class PeerLoop extends Thread implements PacketSender {
     private final UDPSocket udpSocket;
     private final ConnectionHolder connHolder;
     private final IncomingMessagesQueue incomingMessages;
+    private final CachedMemory cachedMemory;
     private final int recvMessagesThreshold;
 
     private EnumMap<MessageType, IncomingMessageHandler> messageHandlers;
     private volatile boolean isRunning;
 
-    PeerLoop(ConnectionHolder connHolder, IncomingMessagesQueue incomingMessages, PeerConfig config, int recvMessagesThreshold) throws SocketException {
+    PeerLoop(ConnectionHolder connHolder,
+            IncomingMessagesQueue incomingMessages,
+            CachedMemory cachedMemory,
+            PeerConfig config,
+            int recvMessagesThreshold
+    ) throws SocketException {
+
         this.connHolder = connHolder;
         this.incomingMessages = incomingMessages;
+        this.cachedMemory = cachedMemory;
         isRunning = true;
         initializeHandlers();
 
         this.recvMessagesThreshold = recvMessagesThreshold;
 
-        udpSocket = new UDPSocket(config.getPort(), 1, config.getReceiveBufferSize());
+        udpSocket = new UDPSocket(config.getPort(), 1, config.getReceiveBufferSize(), cachedMemory);
     }
 
     private void initializeHandlers() {
@@ -123,15 +131,14 @@ public class PeerLoop extends Thread implements PacketSender {
         DeliveryMethod method = DeliveryMethod.from(buf[dataIdx++]);
         int seqNumber = (buf[dataIdx++] & 0xFF);
         seqNumber = (seqNumber | (buf[dataIdx++] & 0xFF) << 8);
-//        Logger.info("SEQ %d", seqNumber);
-//        Logger.info("RECV %s", type);
 
         // deserialize data
-        byte[] data = new byte[length - dataIdx];
-        System.arraycopy(buf, dataIdx, data, 0, data.length);
+        int dataLen = length - dataIdx;
+        byte[] data = cachedMemory.allocBuffer(dataLen);
+        System.arraycopy(buf, dataIdx, data, 0, dataLen);
 
         IncomingMessageHandler handler = messageHandlers.getOrDefault(type, new UnknownMessageHandler());
-        handler.handle(addr, method, (short)seqNumber, data, data.length);
+        handler.handle(addr, method, (short)seqNumber, data, dataLen);
 
         return false;
     }
