@@ -29,6 +29,7 @@ hs_err_pid*
 .idea/**/dictionaries
 .idea/**/shelf
 .idea/artifacts/*
+.idea/sonarlint
 
 # Generated files
 .idea/**/contentModel.xml
@@ -70,3 +71,4 @@ cmake-build-*/
 
 # IntelliJ
 out/
+target/
