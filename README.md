@@ -35,4 +35,7 @@ Simple Reliable UDP (RUDP) com.rozsa.network library in Java.
 - Add reliable delivery methods:
   - Reliable sequenced;
   - Reliabled ordered. 
- - Add channels [?]
+ - Add channels [?];
+ - Add message coalescing;
+ - Add fragmentation;
+ - Review header space usage.
