@@ -1,30 +1,32 @@
-package com.rozsa.network.message;
-
-import com.rozsa.network.Logger;
-
+package com.rozsa.network;
 
 public final class OutgoingMessage {
+    private final CachedMemory cachedMemory;
     private byte[] data;
-    private int dataIdx = 0;
+    private int dataLength;
+    private int dataIdx;
 
-    public OutgoingMessage(int size) {
-        data = new byte[size];
+    OutgoingMessage(CachedMemory cachedMemory, int dataLength) {
+        this.cachedMemory = cachedMemory;
+        this.data = cachedMemory.allocBuffer(dataLength);
+        this.dataLength = dataLength;
+        dataIdx = 0;
     }
 
     public byte[] getData() {
         return data;
     }
 
-    public int getDataLength() {
+    public int getDataWritten() {
         return dataIdx;
     }
 
-    // watch out for GC.
     private void reallocateData(int extraLength) {
-        int newSize = data.length + extraLength;
-        byte[] newBuf = new byte[newSize];
+        int newLength = dataLength + extraLength;
+        byte[] newBuf = cachedMemory.allocBuffer(newLength);
 
-        System.arraycopy(data, 0, newBuf, 0, data.length);
+        System.arraycopy(data, 0, newBuf, 0, dataLength);
+        cachedMemory.freeBuffer(data);
         data = newBuf;
     }
 

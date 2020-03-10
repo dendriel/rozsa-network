@@ -6,7 +6,7 @@ import com.rozsa.network.message.ConnectedMessage;
 import com.rozsa.network.message.DisconnectedMessage;
 import com.rozsa.network.message.IncomingUserDataMessage;
 import com.rozsa.network.message.PingUpdatedMessage;
-import com.rozsa.network.message.OutgoingMessage;
+import com.rozsa.network.OutgoingMessage;
 
 import java.io.NotActiveException;
 import java.net.SocketException;
@@ -16,12 +16,13 @@ public class Main {
     public static void main(String[] args) throws SocketException, NotActiveException, UnknownHostException, InterruptedException {
         int serverPort = 9090;
         int clientPort = 8989;
-        isServer = true;
+//        isServer = true;
 
         int targetPort = isServer ? serverPort : clientPort;
 
         PeerConfig config = new PeerConfig(targetPort);
         config.setPingUpdatedEventEnabled(true);
+        config.setPingInterval(0.25f);
 
         peer = new NetworkPeer(config);
         peer.addOnConnectedEventListener(Main::onConnectedEvent);
@@ -55,15 +56,15 @@ public class Main {
         int count = 512;
 
         try {
-            Thread.sleep(3000);
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
         for (int i = 0;  i < count; i++) {
-            String myName = String.valueOf(i);
-            OutgoingMessage outgoingMsg = new OutgoingMessage(myName.length());
-            outgoingMsg.writeString(myName);
+            String msg = String.valueOf(i);
+            OutgoingMessage outgoingMsg = peer.createOutgoingMessage(msg.length());
+            outgoingMsg.writeString(msg);
 //            outgoingMsg.writeString(String.format(" - extra text!"));
             peer.sendMessage(conn, outgoingMsg, DeliveryMethod.RELIABLE);
         }
@@ -88,11 +89,12 @@ public class Main {
                 continue;
             }
 
-//            System.out.println("Received message \"" + new String(msg.getData()) + "\" " + " from " + msg.getConnection());
             byte[] buf = new byte[msg.getLength()];
             System.arraycopy(msg.getData(), 0, buf, 0, buf.length);
-            System.out.println("Received message \"" + new String(buf) + "\"");
-//            peer.disconnect(msg.getConnection());
+            String val = new String(buf);
+            System.out.println("Received message \"" + val + "\"");
+
+            peer.recycle(msg);
         }
     }
 }

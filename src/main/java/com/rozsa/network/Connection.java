@@ -1,7 +1,6 @@
 package com.rozsa.network;
 
 import com.rozsa.network.message.IncomingMessage;
-import com.rozsa.network.message.OutgoingMessage;
 
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;

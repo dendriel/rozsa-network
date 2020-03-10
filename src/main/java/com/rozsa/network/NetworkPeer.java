@@ -66,6 +66,14 @@ public class NetworkPeer {
         peer.sendMessage(conn, msg, deliveryMethod);
     }
 
+    public OutgoingMessage createOutgoingMessage(int length) {
+        return peer.createOutgoingMessage(length);
+    }
+
+    public void recycle(IncomingMessage msg) {
+        peer.recycle(msg);
+    }
+
     public IncomingUserDataMessage read() {
         IncomingMessage msg = peer.read();
         if (msg == null) {

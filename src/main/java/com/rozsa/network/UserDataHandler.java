@@ -22,6 +22,7 @@ class UserDataHandler implements IncomingMessageHandler {
     public void handle(Address addr, DeliveryMethod method, short seqNumber, byte[] data, int length) {
         Connection conn = connHolder.getHandshakeOrConnection(addr.getId());
         if (conn == null) {
+            cachedMemory.freeBuffer(data);
             Logger.warn("Received user data from %s but handshake nor connection doesn't even exist!.", addr);
             return;
         }

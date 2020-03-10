@@ -40,7 +40,7 @@ class CachedMemory {
     }
 
     void freeBuffer(byte[] buf) {
-        if (buf.length == 0) {
+        if (buf == null || buf.length == 0) {
             return;
         }
 

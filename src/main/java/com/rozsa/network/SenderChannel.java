@@ -1,11 +1,9 @@
 package com.rozsa.network;
 
 import com.rozsa.network.message.IncomingMessage;
-import com.rozsa.network.message.OutgoingMessage;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.LongSupplier;
-import java.util.function.Supplier;
 
 abstract class SenderChannel {
     protected final DeliveryMethod type;
@@ -36,7 +34,7 @@ abstract class SenderChannel {
         while(!outgoingMessages.isEmpty()) {
             OutgoingMessage msg = outgoingMessages.poll();
 
-            int bufSize = msg.getDataLength() + NetConstants.MsgHeaderSize;
+            int bufSize = msg.getDataWritten() + NetConstants.MsgHeaderSize;
             byte[] buf = cachedMemory.allocBuffer(bufSize);
             int bufIdx = 0;
             buf[bufIdx++] = MessageType.USER_DATA.getId();
@@ -44,7 +42,7 @@ abstract class SenderChannel {
             buf[bufIdx++] = 0;
             buf[bufIdx++] = 0;
 
-            System.arraycopy(msg.getData(), 0, buf, bufIdx, msg.getDataLength());
+            System.arraycopy(msg.getData(), 0, buf, bufIdx, msg.getDataWritten());
             cachedMemory.freeBuffer(msg.getData());
 
             sender.send(addr, buf, bufSize, true);

@@ -1,7 +1,6 @@
 package com.rozsa.network;
 
 import com.rozsa.network.message.IncomingMessage;
-import com.rozsa.network.message.OutgoingMessage;
 
 import java.io.NotActiveException;
 import java.net.SocketException;
@@ -44,6 +43,14 @@ public class Peer {
 
     public IncomingMessage read() {
         return incomingMessages.poll();
+    }
+
+    public OutgoingMessage createOutgoingMessage(int length) {
+        return new OutgoingMessage(cachedMemory, length);
+    }
+
+    public void recycle(IncomingMessage msg) {
+        cachedMemory.freeBuffer(msg.getData());
     }
 
     public Connection connect(String ip, int port) throws NotActiveException, UnknownHostException {

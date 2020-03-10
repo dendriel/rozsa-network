@@ -1,7 +1,6 @@
 package com.rozsa.network;
 
 import com.rozsa.network.message.IncomingMessage;
-import com.rozsa.network.message.OutgoingMessage;
 
 import java.util.LinkedList;
 import java.util.Queue;
@@ -114,7 +113,7 @@ class ReliableSenderChannel extends SenderChannel {
         while (!outgoingMessages.isEmpty() && ((windowEnd + 1) % windowSize) != windowStart) {
             OutgoingMessage msg = outgoingMessages.poll();
 
-            int bufSize = msg.getDataLength() + NetConstants.MsgHeaderSize;
+            int bufSize = msg.getDataWritten() + NetConstants.MsgHeaderSize;
             byte[] buf = cachedMemory.allocBuffer(bufSize);
             int bufIdx = 0;
             buf[bufIdx++] = MessageType.USER_DATA.getId();
@@ -124,14 +123,14 @@ class ReliableSenderChannel extends SenderChannel {
 
             seqNumber = (short)((seqNumber + 1) % maxSeqNumbers);
 
-            System.arraycopy(msg.getData(), 0, buf, bufIdx, msg.getDataLength());
+            System.arraycopy(msg.getData(), 0, buf, bufIdx, msg.getDataWritten());
             cachedMemory.freeBuffer(msg.getData());
 
             short windowSlot = windowEnd;
             windowEnd = (short)((windowEnd + 1) % windowSize);
             storedMessages[windowSlot].set(buf, bufSize);
 
-            sender.send(addr, buf, buf.length, false);
+            sender.send(addr, buf, bufSize, false);
         }
     }
 }
