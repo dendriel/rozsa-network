@@ -33,7 +33,7 @@ abstract class ReceiverChannel {
         }
     }
 
-    private void handleIncomingMessage(IncomingMessage message) {
+    protected void handleIncomingMessage(IncomingMessage message) {
         if (message.getType() != IncomingMessageType.USER_DATA) {
             cachedMemory.freeBuffer(message.getData());
             Logger.error("Unhandled channel message received: %s", message.getType());

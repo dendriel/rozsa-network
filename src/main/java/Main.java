@@ -50,10 +50,12 @@ public class Main {
         if (!isServer) {
             sendReliable(msg.getConnection());
         }
+
+        expectedOrder = 0;
     }
 
     static void sendReliable(Connection conn) {
-        int count = 512;
+        int count = 500;
 
         try {
             Thread.sleep(1000);
@@ -75,6 +77,7 @@ public class Main {
         System.out.println("Disconnected from " + msg.getConnection() + " reason: " + msg.getReason());
     }
 
+    static int expectedOrder;
     private static boolean keepLooping = true;
     private static void loop() throws InterruptedException {
         while (keepLooping) {
@@ -93,6 +96,11 @@ public class Main {
             System.arraycopy(msg.getData(), 0, buf, 0, buf.length);
             String val = new String(buf);
             System.out.println("Received message \"" + val + "\"");
+
+            if (Integer.parseInt(val) != expectedOrder) {
+                System.out.printf("Received out of order message: %s expected: %d\n", val, expectedOrder);
+            }
+            expectedOrder++;
 
             peer.recycle(msg);
         }

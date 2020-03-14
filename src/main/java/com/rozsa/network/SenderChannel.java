@@ -2,52 +2,28 @@ package com.rozsa.network;
 
 import com.rozsa.network.message.IncomingMessage;
 
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.LongSupplier;
 
-abstract class SenderChannel {
-    protected final DeliveryMethod type;
-    protected final ConcurrentLinkedQueue<OutgoingMessage> outgoingMessages;
-    protected final PacketSender sender;
-    protected final Address addr;
-    protected final CachedMemory cachedMemory;
+/**
+ * Implements the 'sender' part from a delivery method.
+ */
+public interface SenderChannel {
+    /**
+     * Channel heartbeat to process incoming messages and send outgoing messages.
+     */
+    void update();
 
-    SenderChannel(DeliveryMethod type, Address addr, PacketSender sender, CachedMemory cachedMemory) {
-        this.type = type;
-        this.sender = sender;
-        this.addr = addr;
-        this.cachedMemory = cachedMemory;
-        outgoingMessages = new ConcurrentLinkedQueue<>();
-    }
+    /**
+     * Enqueue an outgoing message to be sent by this channel.
+     * @param message
+     */
+    void enqueue(OutgoingMessage message);
 
-    public DeliveryMethod getType() {
-        return type;
-    }
-
-    public void enqueue(OutgoingMessage msg) {
-        outgoingMessages.add(msg);
-    }
-
-    public abstract void enqueueAck(IncomingMessage ack);
-
-    public void update() {
-        while(!outgoingMessages.isEmpty()) {
-            OutgoingMessage msg = outgoingMessages.poll();
-
-            int bufSize = msg.getDataWritten() + NetConstants.MsgHeaderSize;
-            byte[] buf = cachedMemory.allocBuffer(bufSize);
-            int bufIdx = 0;
-            buf[bufIdx++] = MessageType.USER_DATA.getId();
-            buf[bufIdx++] = type.getId();
-            buf[bufIdx++] = 0;
-            buf[bufIdx++] = 0;
-
-            System.arraycopy(msg.getData(), 0, buf, bufIdx, msg.getDataWritten());
-            cachedMemory.freeBuffer(msg.getData());
-
-            sender.send(addr, buf, bufSize, true);
-        }
-    }
+    /**
+     * Enqueue an incoming ack message to be processed by this channel.
+     * @param ack
+     */
+    void enqueueAck(IncomingMessage ack);
 
     static SenderChannel create(
             DeliveryMethod deliveryMethod,
@@ -59,6 +35,8 @@ abstract class SenderChannel {
         switch (deliveryMethod) {
             case UNRELIABLE:
                 return new UnreliableSenderChannel(address, sender, cachedMemory);
+            case UNRELIABLE_SEQUENCED:
+                return new UnreliableSequencedSenderChannel(address, sender, cachedMemory);
             case RELIABLE:
                 return new ReliableSenderChannel(address, sender, cachedMemory, NetConstants.ReliableWindowSize, NetConstants.MaxSeqNumbers, latencyProvider);
             default:

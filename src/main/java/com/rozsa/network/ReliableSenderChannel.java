@@ -4,10 +4,15 @@ import com.rozsa.network.message.IncomingMessage;
 
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.LongSupplier;
 
+class ReliableSenderChannel implements SenderChannel {
+    protected final DeliveryMethod type;
+    protected final ConcurrentLinkedQueue<OutgoingMessage> outgoingMessages;
+    protected final PacketSender sender;
+    protected final Address addr;
 
-class ReliableSenderChannel extends SenderChannel {
     private final StoredMessage[] storedMessages;
     private final short windowSize;
     private final short maxSeqNumbers;
@@ -28,12 +33,15 @@ class ReliableSenderChannel extends SenderChannel {
             short maxSeqNumbers,
             LongSupplier resendDelayProvider
     ) {
-        super(DeliveryMethod.RELIABLE, address, sender, cachedMemory);
+        this.type = DeliveryMethod.RELIABLE;
+        this.addr = address;
+        this.sender = sender;
         this.windowSize = (short)(windowSize + 1);
         this.maxSeqNumbers = maxSeqNumbers;
         this.resendDelayProvider = resendDelayProvider;
         this.cachedMemory = cachedMemory;
 
+        outgoingMessages = new ConcurrentLinkedQueue<>();
         storedMessages = new StoredMessage[this.windowSize];
         incomingAcks = new LinkedList<>();
         acks = new boolean[this.windowSize];
@@ -47,6 +55,10 @@ class ReliableSenderChannel extends SenderChannel {
         for (int i = 0; i < storedMessages.length; i++) {
             storedMessages[i] = new StoredMessage();
         }
+    }
+
+    public void enqueue(OutgoingMessage msg) {
+        outgoingMessages.add(msg);
     }
 
     public void enqueueAck(IncomingMessage ack) {
