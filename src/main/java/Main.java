@@ -55,7 +55,7 @@ public class Main {
     }
 
     static void sendReliable(Connection conn) {
-        int count = 500;
+        int count = 2048;
 
         try {
             Thread.sleep(1000);
@@ -68,7 +68,7 @@ public class Main {
             OutgoingMessage outgoingMsg = peer.createOutgoingMessage(msg.length());
             outgoingMsg.writeString(msg);
 //            outgoingMsg.writeString(String.format(" - extra text!"));
-            peer.sendMessage(conn, outgoingMsg, DeliveryMethod.RELIABLE);
+            peer.sendMessage(conn, outgoingMsg, DeliveryMethod.UNRELIABLE_SEQUENCED);
         }
 
     }
@@ -77,7 +77,8 @@ public class Main {
         System.out.println("Disconnected from " + msg.getConnection() + " reason: " + msg.getReason());
     }
 
-    static int expectedOrder;
+    static int messagesReceived = 0;
+    static short expectedOrder;
     private static boolean keepLooping = true;
     private static void loop() throws InterruptedException {
         while (keepLooping) {
@@ -97,10 +98,19 @@ public class Main {
             String val = new String(buf);
             System.out.println("Received message \"" + val + "\"");
 
-            if (Integer.parseInt(val) != expectedOrder) {
-                System.out.printf("Received out of order message: %s expected: %d\n", val, expectedOrder);
+//            if (Integer.parseInt(val) != expectedOrder) {
+//                System.out.printf("Received out of order message: %s expected: %d\n", val, expectedOrder);
+//            }
+//            expectedOrder++;
+
+            short seqNumber = Short.parseShort(val);
+            if (seqNumber < expectedOrder) {
+                System.out.printf("Received out of sequence message: %d expected >= %d\n", seqNumber, expectedOrder);
             }
-            expectedOrder++;
+            expectedOrder = (short)((seqNumber + 1) % 1024);
+            messagesReceived++;
+
+            System.out.println("Received messages: " + messagesReceived);
 
             peer.recycle(msg);
         }

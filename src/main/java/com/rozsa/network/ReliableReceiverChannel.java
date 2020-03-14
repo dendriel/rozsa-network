@@ -4,13 +4,18 @@ import com.rozsa.network.message.IncomingMessage;
 import com.rozsa.network.message.IncomingMessageType;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
-class ReliableReceiverChannel extends ReceiverChannel {
+class ReliableReceiverChannel implements ReceiverChannel {
     private final Address addr;
     private final PacketSender sender;
     private final CachedMemory cachedMemory;
     private final Map<Short, IncomingMessage> withholdSeqNumbers;
     private final Set<Short> acksToSend;
+
+    protected final DeliveryMethod type;
+    protected final ConcurrentLinkedQueue<IncomingMessage> incomingMessages;
+    protected final IncomingMessagesQueue incomingMessagesQueue;
 
     private short expectedSeqNumber;
     private short maxSeqNumber;
@@ -21,18 +26,23 @@ class ReliableReceiverChannel extends ReceiverChannel {
             IncomingMessagesQueue incomingMessagesQueue,
             CachedMemory cachedMemory,
             short maxSeqNumber) {
-        super(DeliveryMethod.RELIABLE, incomingMessagesQueue, cachedMemory);
         this.addr = addr;
         this.sender = sender;
         this.cachedMemory = cachedMemory;
         this.maxSeqNumber = maxSeqNumber;
+        this.type = DeliveryMethod.RELIABLE;
+        this.incomingMessagesQueue = incomingMessagesQueue;
 
         expectedSeqNumber = 0;
         acksToSend = new HashSet<>();
         withholdSeqNumbers = new HashMap<>();
+        incomingMessages = new ConcurrentLinkedQueue<>();
     }
 
-    @Override
+    public void enqueue(IncomingMessage msg) {
+        incomingMessages.add(msg);
+    }
+
     public void update() {
         acksToSend.clear();
         while (!incomingMessages.isEmpty()) {

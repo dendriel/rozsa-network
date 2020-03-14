@@ -16,6 +16,7 @@ Simple Reliable UDP (RUDP) com.rozsa.network library in Java.
 # Delivery Methods
 
 - Unreliable;
+- Unreliable Sequenced;
 - Reliable.
 
 # Protocol Header
@@ -30,8 +31,6 @@ Simple Reliable UDP (RUDP) com.rozsa.network library in Java.
 
 # TODO
 
-- Add unreliable delivery methods:
- - Unreliable sequenced.
 - Add reliable delivery methods:
   - Reliable sequenced;
   - Reliabled ordered. 

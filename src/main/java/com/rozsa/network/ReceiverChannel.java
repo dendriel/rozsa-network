@@ -1,47 +1,21 @@
 package com.rozsa.network;
 
 import com.rozsa.network.message.IncomingMessage;
-import com.rozsa.network.message.IncomingMessageType;
 
-import java.util.concurrent.ConcurrentLinkedQueue;
+/**
+ * Implements the 'receiver' part from a delivery method.
+ */
+public interface ReceiverChannel {
+    /**
+     * Channel heartbeat to dispatch incoming messages and send outgoing acks (when applicable).
+     */
+    void update();
 
-abstract class ReceiverChannel {
-    protected final DeliveryMethod type;
-    protected final ConcurrentLinkedQueue<IncomingMessage> incomingMessages;
-    protected final IncomingMessagesQueue incomingMessagesQueue;
-    protected final CachedMemory cachedMemory;
-
-    ReceiverChannel(DeliveryMethod type, IncomingMessagesQueue incomingMessagesQueue, CachedMemory cachedMemory) {
-        this.type = type;
-        this.incomingMessagesQueue = incomingMessagesQueue;
-        this.cachedMemory = cachedMemory;
-
-        incomingMessages = new ConcurrentLinkedQueue<>();
-    }
-
-    public DeliveryMethod getType() {
-        return type;
-    }
-
-    public void enqueue(IncomingMessage msg) {
-        incomingMessages.add(msg);
-    }
-
-    public void update() {
-        while (!incomingMessages.isEmpty()) {
-            handleIncomingMessage(incomingMessages.poll());
-        }
-    }
-
-    protected void handleIncomingMessage(IncomingMessage message) {
-        if (message.getType() != IncomingMessageType.USER_DATA) {
-            cachedMemory.freeBuffer(message.getData());
-            Logger.error("Unhandled channel message received: %s", message.getType());
-            return;
-        }
-
-        incomingMessagesQueue.enqueue(message);
-    }
+    /**
+     * Enqueue an incoming message to be dispatched by the channel.
+     * @param message
+     */
+    void enqueue(IncomingMessage message);
 
     static ReceiverChannel create(
             DeliveryMethod deliveryMethod,
@@ -53,6 +27,8 @@ abstract class ReceiverChannel {
         switch (deliveryMethod) {
             case UNRELIABLE:
                 return new UnreliableReceiverChannel(incomingMessagesQueue, cachedMemory);
+            case UNRELIABLE_SEQUENCED:
+                return new UnreliableSequencedReceiverChannel(incomingMessagesQueue, cachedMemory, NetConstants.MaxSeqNumbers);
             case RELIABLE:
                 return new ReliableReceiverChannel(address, sender, incomingMessagesQueue, cachedMemory, NetConstants.MaxSeqNumbers);
             default:

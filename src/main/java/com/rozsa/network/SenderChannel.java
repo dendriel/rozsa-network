@@ -36,7 +36,7 @@ public interface SenderChannel {
             case UNRELIABLE:
                 return new UnreliableSenderChannel(address, sender, cachedMemory);
             case UNRELIABLE_SEQUENCED:
-                return new UnreliableSequencedSenderChannel(address, sender, cachedMemory);
+                return new UnreliableSequencedSenderChannel(address, sender, cachedMemory, NetConstants.MaxSeqNumbers);
             case RELIABLE:
                 return new ReliableSenderChannel(address, sender, cachedMemory, NetConstants.ReliableWindowSize, NetConstants.MaxSeqNumbers, latencyProvider);
             default:

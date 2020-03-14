@@ -1,23 +1,29 @@
 package com.rozsa.network;
 
 import com.rozsa.network.message.IncomingMessage;
-import com.rozsa.network.message.IncomingMessageType;
 
-public class UnreliableSequencedReceiverChannel extends ReceiverChannel {
-    private short expectedSequenceNumber;
+class UnreliableSequencedReceiverChannel extends UnreliableReceiverChannel {
+    private final short maxSeqNumber;
+    private short expectedSeqNumber;
 
-    UnreliableSequencedReceiverChannel(IncomingMessagesQueue incomingMessagesQueue, CachedMemory cachedMemory) {
-        super(DeliveryMethod.UNRELIABLE, incomingMessagesQueue, cachedMemory);
+    UnreliableSequencedReceiverChannel(
+            IncomingMessagesQueue incomingMessagesQueue,
+            CachedMemory cachedMemory,
+            short maxSeqNumber
+    ) {
+        super(incomingMessagesQueue, cachedMemory, DeliveryMethod.UNRELIABLE_SEQUENCED);
+        this.maxSeqNumber = maxSeqNumber;
     }
 
     @Override
-    protected void handleIncomingMessage(IncomingMessage message) {
-        if (message.getType() != IncomingMessageType.USER_DATA) {
+    protected void dispatch(IncomingMessage message) {
+        short seqNumber = message.getSeqNumber();
+        if (seqNumber < expectedSeqNumber) {
             cachedMemory.freeBuffer(message.getData());
-            Logger.error("Unhandled channel message received: %s", message.getType());
             return;
         }
 
         incomingMessagesQueue.enqueue(message);
+        expectedSeqNumber = (short)((seqNumber + 1) % maxSeqNumber);
     }
 }
