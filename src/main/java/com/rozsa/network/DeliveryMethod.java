@@ -6,10 +6,9 @@ public enum DeliveryMethod {
     UNRELIABLE(0),
     UNRELIABLE_SEQUENCED(1),
     RELIABLE(2),
-    RELIABLE_SEQUENCE(3),
+    RELIABLE_SEQUENCED(3),
     RELIABLE_ORDERED(4),
     ;
-
 
     private final byte id;
 
@@ -28,7 +27,7 @@ public enum DeliveryMethod {
         idToTypeMapper.put(UNRELIABLE.getId(), UNRELIABLE);
         idToTypeMapper.put(UNRELIABLE_SEQUENCED.getId(), UNRELIABLE_SEQUENCED);
         idToTypeMapper.put(RELIABLE.getId(), RELIABLE);
-        idToTypeMapper.put(RELIABLE_SEQUENCE.getId(), RELIABLE_SEQUENCE);
+        idToTypeMapper.put(RELIABLE_SEQUENCED.getId(), RELIABLE_SEQUENCED);
         idToTypeMapper.put(RELIABLE_ORDERED.getId(), RELIABLE_ORDERED);
     }
 

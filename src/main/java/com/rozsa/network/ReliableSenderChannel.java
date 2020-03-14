@@ -13,17 +13,17 @@ class ReliableSenderChannel implements SenderChannel {
     protected final PacketSender sender;
     protected final Address addr;
 
-    private final StoredMessage[] storedMessages;
-    private final short windowSize;
-    private final short maxSeqNumbers;
-    private final CachedMemory cachedMemory;
-    private final Queue<IncomingMessage> incomingAcks;
-    private final boolean[] acks;
-    private final LongSupplier resendDelayProvider;
+    protected final StoredMessage[] storedMessages;
+    protected final short windowSize;
+    protected final short maxSeqNumbers;
+    protected final CachedMemory cachedMemory;
+    protected final Queue<IncomingMessage> incomingAcks;
+    protected final boolean[] acks;
+    protected final LongSupplier resendDelayProvider;
 
-    private short windowStart;
-    private short windowEnd;
-    private short seqNumber;
+    protected short windowStart;
+    protected short windowEnd;
+    protected short seqNumber;
 
     ReliableSenderChannel(
             Address address,
@@ -33,7 +33,19 @@ class ReliableSenderChannel implements SenderChannel {
             short maxSeqNumbers,
             LongSupplier resendDelayProvider
     ) {
-        this.type = DeliveryMethod.RELIABLE;
+        this(address, sender, cachedMemory, windowSize, maxSeqNumbers, resendDelayProvider, DeliveryMethod.RELIABLE);
+    }
+
+    ReliableSenderChannel(
+            Address address,
+            PacketSender sender,
+            CachedMemory cachedMemory,
+            short windowSize,
+            short maxSeqNumbers,
+            LongSupplier resendDelayProvider,
+            DeliveryMethod type
+    ) {
+        this.type = type;
         this.addr = address;
         this.sender = sender;
         this.windowSize = (short)(windowSize + 1);
@@ -90,7 +102,7 @@ class ReliableSenderChannel implements SenderChannel {
         }
     }
 
-    private void handleAck(short ackNumber) {
+    protected void handleAck(short ackNumber) {
         if (ackNumber == windowStart) {
             cachedMemory.freeBuffer(storedMessages[ackNumber].getEncodedMsg());
             storedMessages[ackNumber].reset();
@@ -101,6 +113,7 @@ class ReliableSenderChannel implements SenderChannel {
             } while (acks[windowStart]);
         }
         else if (windowStart <= (windowSize / 2) && ackNumber > (windowSize / 2)) {
+            // Ack is outside current window half. May be an old message.
             return;
         }
         else if (ackNumber > windowStart) {

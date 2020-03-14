@@ -16,7 +16,7 @@ public class Main {
     public static void main(String[] args) throws SocketException, NotActiveException, UnknownHostException, InterruptedException {
         int serverPort = 9090;
         int clientPort = 8989;
-//        isServer = true;
+        isServer = true;
 
         int targetPort = isServer ? serverPort : clientPort;
 
@@ -68,7 +68,7 @@ public class Main {
             OutgoingMessage outgoingMsg = peer.createOutgoingMessage(msg.length());
             outgoingMsg.writeString(msg);
 //            outgoingMsg.writeString(String.format(" - extra text!"));
-            peer.sendMessage(conn, outgoingMsg, DeliveryMethod.UNRELIABLE_SEQUENCED);
+            peer.sendMessage(conn, outgoingMsg, DeliveryMethod.RELIABLE);
         }
 
     }
@@ -110,7 +110,7 @@ public class Main {
             expectedOrder = (short)((seqNumber + 1) % 1024);
             messagesReceived++;
 
-            System.out.println("Received messages: " + messagesReceived);
+//            System.out.println("Received messages: " + messagesReceived);
 
             peer.recycle(msg);
         }
