@@ -19,17 +19,21 @@ class ReliableReceiverChannel implements ReceiverChannel {
 
     private short expectedSeqNumber;
     private short maxSeqNumber;
+    private short windowSize;
 
     ReliableReceiverChannel(
             Address addr,
             PacketSender sender,
             IncomingMessagesQueue incomingMessagesQueue,
             CachedMemory cachedMemory,
-            short maxSeqNumber) {
+            short maxSeqNumber,
+            short windowSize
+    ) {
         this.addr = addr;
         this.sender = sender;
         this.cachedMemory = cachedMemory;
         this.maxSeqNumber = maxSeqNumber;
+        this.windowSize = windowSize;
         this.type = DeliveryMethod.RELIABLE;
         this.incomingMessagesQueue = incomingMessagesQueue;
 
@@ -85,43 +89,37 @@ class ReliableReceiverChannel implements ReceiverChannel {
         }
 
         short seqNumber = message.getSeqNumber();
-        if (seqNumber == expectedSeqNumber) {
-//            Logger.debug("Received expected msg seq number %d", expectedSeqNumber);
-            acksToSend.add(expectedSeqNumber);
+        int relativeAckNumber = expectedSeqNumber - ((seqNumber < expectedSeqNumber) ? seqNumber + maxSeqNumber : seqNumber);
+
+        if (relativeAckNumber == 0) {
+            acksToSend.add(seqNumber);
             incomingMessagesQueue.enqueue(message);
             updateExpectedSeqNumber();
         }
-        else if (expectedSeqNumber <= (maxSeqNumber / 2) && seqNumber > (maxSeqNumber / 2)) {
-            // if received seq number is not in the same half as the expected seq number, probably
-            // received a already acked seq number.
-//            Logger.debug("Unexpected message. Different half: %d - exp %d", seqNumber, expectedSeqNumber);
+        // ack is inside window
+        else if (Math.abs(relativeAckNumber) < windowSize) {
             acksToSend.add(seqNumber);
-        }
-        // too early message?
-        else if (seqNumber > expectedSeqNumber) {
-//            Logger.debug("Received to early msg seq number %d expected %d", seqNumber, expectedSeqNumber);
             if (withholdSeqNumbers.containsKey(seqNumber)) {
-//                Logger.debug("Already dispatched this message seq number %d", seqNumber);
+                cachedMemory.freeBuffer(message.getData());
                 return;
             }
-            acksToSend.add(seqNumber);
             incomingMessagesQueue.enqueue(message);
             withholdSeqNumbers.put(seqNumber, message);
         }
         else {
             // We don't expect this message sequence number.. resend its ack
-//            Logger.debug("Unexpected message: %d - exp %d", seqNumber, expectedSeqNumber);
             acksToSend.add(seqNumber);
+            cachedMemory.freeBuffer(message.getData());
         }
     }
 
     private void updateExpectedSeqNumber() {
         expectedSeqNumber = (short)((expectedSeqNumber + 1) % maxSeqNumber);
-//        Logger.debug("Updated expected SEQ number %d", expectedSeqNumber);
+        Logger.debug("Updated expected SEQ number %d", expectedSeqNumber);
         while(withholdSeqNumbers.containsKey(expectedSeqNumber)) {
             withholdSeqNumbers.remove(expectedSeqNumber);
             expectedSeqNumber = (short)((expectedSeqNumber + 1) % maxSeqNumber);
-//            Logger.debug("Updated expected SEQ number %d", expectedSeqNumber);
+            Logger.debug("Updated expected SEQ number %d", expectedSeqNumber);
         }
     }
 }

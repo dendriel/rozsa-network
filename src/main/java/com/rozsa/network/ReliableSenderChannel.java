@@ -48,7 +48,7 @@ class ReliableSenderChannel implements SenderChannel {
         this.type = type;
         this.addr = address;
         this.sender = sender;
-        this.windowSize = (short)(windowSize + 1);
+        this.windowSize = windowSize;
         this.maxSeqNumbers = maxSeqNumbers;
         this.resendDelayProvider = resendDelayProvider;
         this.cachedMemory = cachedMemory;
@@ -88,14 +88,14 @@ class ReliableSenderChannel implements SenderChannel {
         while (!incomingAcks.isEmpty()) {
             IncomingMessage ack = incomingAcks.poll();
 
-            handleAck((short)(ack.getSeqNumber() % windowSize));
+            handleAck(ack.getSeqNumber());
 
             byte[] receivedAcks = ack.getData();
             for (int i = 0; i < (ack.getLength() / 2); i++) {
                 int ackIdx = i * 2;
                 short ackNumber = (short)((receivedAcks[ackIdx++] & 0xff) << 8);
                 ackNumber = (short)(ackNumber | (receivedAcks[ackIdx] & 0xff));
-                ackNumber = (short)(ackNumber % windowSize);
+                ackNumber = (short)(ackNumber % maxSeqNumbers);
                 handleAck(ackNumber);
             }
             cachedMemory.freeBuffer(receivedAcks);
@@ -103,23 +103,24 @@ class ReliableSenderChannel implements SenderChannel {
     }
 
     protected void handleAck(short ackNumber) {
-        if (ackNumber == windowStart) {
-            cachedMemory.freeBuffer(storedMessages[ackNumber].getEncodedMsg());
-            storedMessages[ackNumber].reset();
+        int relativeAckNumber = windowStart - ((ackNumber < windowStart) ? ackNumber + maxSeqNumbers : ackNumber);
+        int windowSlot = (short)(ackNumber % windowSize);
+        // expected ack.
+        if (relativeAckNumber == 0) {
+            cachedMemory.freeBuffer(storedMessages[windowSlot].getEncodedMsg());
+            storedMessages[windowSlot].reset();
             // clear received acks.
             do {
-                acks[windowStart] = false;
-                windowStart = (short)((windowStart + 1) % windowSize);
-            } while (acks[windowStart]);
+                acks[windowSlot] = false;
+                windowStart = (short)((windowStart + 1) % maxSeqNumbers);
+                windowSlot = (short)(windowStart % windowSize);
+            } while (acks[windowSlot]);
         }
-        else if (windowStart <= (windowSize / 2) && ackNumber > (windowSize / 2)) {
-            // Ack is outside current window half. May be an old message.
-            return;
-        }
-        else if (ackNumber > windowStart) {
-            cachedMemory.freeBuffer(storedMessages[ackNumber].getEncodedMsg());
-            storedMessages[ackNumber].reset();
-            acks[ackNumber] = true;
+        // ack is inside window.
+        else if (Math.abs(relativeAckNumber) < windowSize) {
+            cachedMemory.freeBuffer(storedMessages[windowSlot].getEncodedMsg());
+            storedMessages[windowSlot].reset();
+            acks[windowSlot] = true;
         }
     }
 
@@ -135,7 +136,7 @@ class ReliableSenderChannel implements SenderChannel {
     }
 
     private void sendMessages() {
-        while (!outgoingMessages.isEmpty() && ((windowEnd + 1) % windowSize) != windowStart) {
+        while (!outgoingMessages.isEmpty() && Math.abs(1 + ((windowEnd < windowStart) ? (windowEnd + windowSize) : windowEnd) - windowStart) < windowSize) {
             OutgoingMessage msg = outgoingMessages.poll();
 
             int bufSize = msg.getDataWritten() + NetConstants.MsgHeaderSize;
@@ -151,8 +152,9 @@ class ReliableSenderChannel implements SenderChannel {
             System.arraycopy(msg.getData(), 0, buf, bufIdx, msg.getDataWritten());
             cachedMemory.freeBuffer(msg.getData());
 
-            short windowSlot = windowEnd;
-            windowEnd = (short)((windowEnd + 1) % windowSize);
+            short windowSlot = (short)(windowEnd % windowSize);
+            windowEnd = (short)((windowEnd + 1) % maxSeqNumbers);
+//            Logger.debug("Window Start %d; end updated to %d - prev slot was %d", windowStart, windowEnd, windowSlot);
             storedMessages[windowSlot].set(buf, bufSize);
 
             sender.send(addr, buf, bufSize, false);

@@ -16,7 +16,7 @@ public class Main {
     public static void main(String[] args) throws SocketException, NotActiveException, UnknownHostException, InterruptedException {
         int serverPort = 9090;
         int clientPort = 8989;
-        isServer = true;
+//        isServer = true;
 
         int targetPort = isServer ? serverPort : clientPort;
 
@@ -96,7 +96,6 @@ public class Main {
             byte[] buf = new byte[msg.getLength()];
             System.arraycopy(msg.getData(), 0, buf, 0, buf.length);
             String val = new String(buf);
-            System.out.println("Received message \"" + val + "\"");
 
 //            if (Integer.parseInt(val) != expectedOrder) {
 //                System.out.printf("Received out of order message: %s expected: %d\n", val, expectedOrder);
@@ -110,7 +109,7 @@ public class Main {
             expectedOrder = (short)((seqNumber + 1) % 1024);
             messagesReceived++;
 
-//            System.out.println("Received messages: " + messagesReceived);
+            System.out.println("Received message \"" + val + "\" - total: " + messagesReceived);
 
             peer.recycle(msg);
         }
