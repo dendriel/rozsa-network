@@ -11,13 +11,17 @@ Simple Reliable UDP (RUDP) com.rozsa.network library in Java.
 - Disconnection reason;
 - Synchronized network events delivery (NetworkPeer.read() may return a data message or execute an event method);
 - Data delivery;
+- Flow control for reliable delivery methods (uses a sliding window);
 - Data buffer recycling.
 
 # Delivery Methods
 
-- Unreliable;
-- Unreliable Sequenced;
-- Reliable.
+- Unreliable:
+  - Pure Unreliable;
+  - Unreliable Sequenced.
+- Reliable:
+  - Pure Reliable;
+  - Reliable Sequenced.
 
 # Protocol Header
 
@@ -32,9 +36,9 @@ Simple Reliable UDP (RUDP) com.rozsa.network library in Java.
 # TODO
 
 - Add reliable delivery methods:
-  - Reliable sequenced;
-  - Reliabled ordered. 
- - Add channels [?];
- - Add message coalescing;
- - Add fragmentation;
- - Review header space usage.
+  - Reliable ordered.
+- Add channels [?];
+- Add message coalescing;
+- Add fragmentation;
+- Review header space usage:
+  - Sequence numbers doesn't use whole all 16 bits.

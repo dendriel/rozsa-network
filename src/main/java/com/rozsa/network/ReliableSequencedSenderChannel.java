@@ -2,7 +2,7 @@ package com.rozsa.network;
 
 import java.util.function.LongSupplier;
 
-public class ReliableSequencedSenderChannel extends ReliableSenderChannel {
+class ReliableSequencedSenderChannel extends ReliableSenderChannel {
     ReliableSequencedSenderChannel(
             Address address,
             PacketSender sender,
@@ -16,23 +16,23 @@ public class ReliableSequencedSenderChannel extends ReliableSenderChannel {
 
     @Override
     protected void handleAck(short ackNumber) {
-        if (ackNumber == windowStart) {
-            cachedMemory.freeBuffer(storedMessages[ackNumber].getEncodedMsg());
-            storedMessages[ackNumber].reset();
-            // clear received acks.
+        int relativeAckNumber = Math.abs(windowStart - ((ackNumber < windowStart) ? ackNumber + maxSeqNumbers : ackNumber));
+//        Logger.debug("Received ack %d - relate %d", ackNumber, relativeAckNumber);
+        if (relativeAckNumber < windowSize) {
+            // An early message arrived. Discard all older messages.
+            short windowSlot = (short)(windowStart % windowSize);
+            int targetAckNumber = windowStart + relativeAckNumber;
+            short counter = windowStart;
+//            Logger.debug("Received valid ack %d - relative: %d - wStart %d - wTarget %d", ackNumber, relativeAckNumber, windowStart, targetAckNumber);
             do {
-                acks[windowStart] = false;
-                windowStart = (short)((windowStart + 1) % windowSize);
-            } while (acks[windowStart]);
-        }
-        else if (windowStart <= (windowSize / 2) && ackNumber > (windowSize / 2)) {
-            return;
-        }
-        // A higher than expected ack number message was received by remote peer. So he won't need older messages.
-        else if (ackNumber > windowStart) {
-            cachedMemory.freeBuffer(storedMessages[ackNumber].getEncodedMsg());
-            storedMessages[ackNumber].reset();
-            acks[ackNumber] = true;
+//                Logger.debug("Free ack %d - slot %d", windowStart, windowSlot);
+                cachedMemory.freeBuffer(storedMessages[windowSlot].getEncodedMsg());
+                storedMessages[windowSlot].reset();
+                acks[windowSlot] = false;
+                windowStart = (short)((windowStart + 1) % maxSeqNumbers);
+                windowSlot = (short)(windowStart % windowSize);
+                counter++;
+            } while(counter <= targetAckNumber);
         }
     }
 }

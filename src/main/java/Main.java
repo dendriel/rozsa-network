@@ -16,7 +16,7 @@ public class Main {
     public static void main(String[] args) throws SocketException, NotActiveException, UnknownHostException, InterruptedException {
         int serverPort = 9090;
         int clientPort = 8989;
-//        isServer = true;
+        isServer = true;
 
         int targetPort = isServer ? serverPort : clientPort;
 
@@ -55,7 +55,8 @@ public class Main {
     }
 
     static void sendReliable(Connection conn) {
-        int count = 2048;
+        int count = 3072;
+//        int count = 2048;
 
         try {
             Thread.sleep(1000);
@@ -68,7 +69,7 @@ public class Main {
             OutgoingMessage outgoingMsg = peer.createOutgoingMessage(msg.length());
             outgoingMsg.writeString(msg);
 //            outgoingMsg.writeString(String.format(" - extra text!"));
-            peer.sendMessage(conn, outgoingMsg, DeliveryMethod.RELIABLE);
+            peer.sendMessage(conn, outgoingMsg, DeliveryMethod.RELIABLE_SEQUENCED);
         }
 
     }

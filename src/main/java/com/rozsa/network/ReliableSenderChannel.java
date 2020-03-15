@@ -116,7 +116,7 @@ class ReliableSenderChannel implements SenderChannel {
                 windowSlot = (short)(windowStart % windowSize);
             } while (acks[windowSlot]);
         }
-        // ack is inside window.
+        // ack is inside window and is ahead of windowStart.
         else if (Math.abs(relativeAckNumber) < windowSize) {
             cachedMemory.freeBuffer(storedMessages[windowSlot].getEncodedMsg());
             storedMessages[windowSlot].reset();

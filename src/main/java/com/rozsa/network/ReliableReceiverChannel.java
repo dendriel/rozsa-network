@@ -7,19 +7,19 @@ import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 class ReliableReceiverChannel implements ReceiverChannel {
-    private final Address addr;
-    private final PacketSender sender;
-    private final CachedMemory cachedMemory;
-    private final Map<Short, IncomingMessage> withholdSeqNumbers;
-    private final Set<Short> acksToSend;
+    protected final Address addr;
+    protected final PacketSender sender;
+    protected final CachedMemory cachedMemory;
+    protected final Map<Short, IncomingMessage> withholdSeqNumbers;
+    protected final Set<Short> acksToSend;
 
     protected final DeliveryMethod type;
     protected final ConcurrentLinkedQueue<IncomingMessage> incomingMessages;
     protected final IncomingMessagesQueue incomingMessagesQueue;
 
-    private short expectedSeqNumber;
-    private short maxSeqNumber;
-    private short windowSize;
+    protected short expectedSeqNumber;
+    protected short maxSeqNumber;
+    protected short windowSize;
 
     ReliableReceiverChannel(
             Address addr,
@@ -29,12 +29,24 @@ class ReliableReceiverChannel implements ReceiverChannel {
             short maxSeqNumber,
             short windowSize
     ) {
+        this(addr, sender, incomingMessagesQueue, cachedMemory, maxSeqNumber, windowSize, DeliveryMethod.RELIABLE);
+    }
+
+    ReliableReceiverChannel(
+            Address addr,
+            PacketSender sender,
+            IncomingMessagesQueue incomingMessagesQueue,
+            CachedMemory cachedMemory,
+            short maxSeqNumber,
+            short windowSize,
+            DeliveryMethod type
+    ) {
         this.addr = addr;
         this.sender = sender;
         this.cachedMemory = cachedMemory;
         this.maxSeqNumber = maxSeqNumber;
         this.windowSize = windowSize;
-        this.type = DeliveryMethod.RELIABLE;
+        this.type = type;
         this.incomingMessagesQueue = incomingMessagesQueue;
 
         expectedSeqNumber = 0;
@@ -66,7 +78,7 @@ class ReliableReceiverChannel implements ReceiverChannel {
 
         int bufIdx = 0;
         buf[bufIdx++] = MessageType.ACK.getId();
-        buf[bufIdx++] = DeliveryMethod.RELIABLE.getId();
+        buf[bufIdx++] = type.getId();
 
         Iterator<Short> acksIt = acksToSend.iterator();
         Short seqNumber = acksIt.next();
@@ -82,7 +94,7 @@ class ReliableReceiverChannel implements ReceiverChannel {
         sender.send(addr, buf, bufIdx, true);
     }
 
-    private void handleIncomingMessage(IncomingMessage message) {
+    protected void handleIncomingMessage(IncomingMessage message) {
         if (message.getType() != IncomingMessageType.USER_DATA) {
             cachedMemory.freeBuffer(message.getData());
             return;
@@ -92,6 +104,7 @@ class ReliableReceiverChannel implements ReceiverChannel {
         int relativeAckNumber = expectedSeqNumber - ((seqNumber < expectedSeqNumber) ? seqNumber + maxSeqNumber : seqNumber);
 
         if (relativeAckNumber == 0) {
+            Logger.debug("Right on time seq number: %d", seqNumber);
             acksToSend.add(seqNumber);
             incomingMessagesQueue.enqueue(message);
             updateExpectedSeqNumber();
@@ -100,13 +113,16 @@ class ReliableReceiverChannel implements ReceiverChannel {
         else if (Math.abs(relativeAckNumber) < windowSize) {
             acksToSend.add(seqNumber);
             if (withholdSeqNumbers.containsKey(seqNumber)) {
+                Logger.debug("Already received seq number: %d - won't redispatch", seqNumber);
                 cachedMemory.freeBuffer(message.getData());
                 return;
             }
+            Logger.debug("Dispatch message seq number: %d", seqNumber);
             incomingMessagesQueue.enqueue(message);
             withholdSeqNumbers.put(seqNumber, message);
         }
         else {
+            Logger.debug("Unexpected seq number: %d - exp: %d - rel: %d", seqNumber, expectedSeqNumber, relativeAckNumber);
             // We don't expect this message sequence number.. resend its ack
             acksToSend.add(seqNumber);
             cachedMemory.freeBuffer(message.getData());
