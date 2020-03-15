@@ -41,4 +41,8 @@ Simple Reliable UDP (RUDP) com.rozsa.network library in Java made by me =].
 - Add fragmentation;
 - Review header space usage:
   - Sequence numbers doesn't use whole all 16 bits.
-- Add testbed to test delivery methods.
+- Add testbed to test delivery methods;
+- Peer and connection statistics (peer and connection):
+  - Bytes sent/received;
+  - Messages send/received.
+- Add remote time offset calculation.
