@@ -10,7 +10,7 @@ class ReliableReceiverChannel implements ReceiverChannel {
     protected final Address addr;
     protected final PacketSender sender;
     protected final CachedMemory cachedMemory;
-    protected final Map<Short, IncomingMessage> withholdSeqNumbers;
+    protected final Set<Short> withholdSeqNumbers;
     protected final Set<Short> acksToSend;
 
     protected final DeliveryMethod type;
@@ -51,7 +51,7 @@ class ReliableReceiverChannel implements ReceiverChannel {
 
         expectedSeqNumber = 0;
         acksToSend = new HashSet<>();
-        withholdSeqNumbers = new HashMap<>();
+        withholdSeqNumbers = new HashSet<>();
         incomingMessages = new ConcurrentLinkedQueue<>();
     }
 
@@ -106,20 +106,20 @@ class ReliableReceiverChannel implements ReceiverChannel {
         if (relativeAckNumber == 0) {
             Logger.debug("Right on time seq number: %d", seqNumber);
             acksToSend.add(seqNumber);
-            incomingMessagesQueue.enqueue(message);
+            dispatch(message);
             updateExpectedSeqNumber();
         }
         // ack is inside window
         else if (Math.abs(relativeAckNumber) < windowSize) {
             acksToSend.add(seqNumber);
-            if (withholdSeqNumbers.containsKey(seqNumber)) {
+            if (withholdSeqNumbers.contains(seqNumber)) {
                 Logger.debug("Already received seq number: %d - won't redispatch", seqNumber);
                 cachedMemory.freeBuffer(message.getData());
                 return;
             }
             Logger.debug("Dispatch message seq number: %d", seqNumber);
-            incomingMessagesQueue.enqueue(message);
-            withholdSeqNumbers.put(seqNumber, message);
+            dispatch(message);
+            withholdSeqNumbers.add(seqNumber);
         }
         else {
             Logger.debug("Unexpected seq number: %d - exp: %d - rel: %d", seqNumber, expectedSeqNumber, relativeAckNumber);
@@ -129,10 +129,14 @@ class ReliableReceiverChannel implements ReceiverChannel {
         }
     }
 
+    protected void dispatch(IncomingMessage message) {
+        incomingMessagesQueue.enqueue(message);
+    }
+
     private void updateExpectedSeqNumber() {
         expectedSeqNumber = (short)((expectedSeqNumber + 1) % maxSeqNumber);
         Logger.debug("Updated expected SEQ number %d", expectedSeqNumber);
-        while(withholdSeqNumbers.containsKey(expectedSeqNumber)) {
+        while(withholdSeqNumbers.contains(expectedSeqNumber)) {
             withholdSeqNumbers.remove(expectedSeqNumber);
             expectedSeqNumber = (short)((expectedSeqNumber + 1) % maxSeqNumber);
             Logger.debug("Updated expected SEQ number %d", expectedSeqNumber);

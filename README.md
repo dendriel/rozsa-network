@@ -1,5 +1,5 @@
 # Rozsa Network
-Simple Reliable UDP (RUDP) com.rozsa.network library in Java.
+Simple Reliable UDP (RUDP) com.rozsa.network library in Java made by me =].
 
 # Features
 
@@ -21,7 +21,8 @@ Simple Reliable UDP (RUDP) com.rozsa.network library in Java.
   - Unreliable Sequenced.
 - Reliable:
   - Pure Reliable;
-  - Reliable Sequenced.
+  - Reliable Sequenced;
+  - Reliable Ordered.
 
 # Protocol Header
 
@@ -35,10 +36,9 @@ Simple Reliable UDP (RUDP) com.rozsa.network library in Java.
 
 # TODO
 
-- Add reliable delivery methods:
-  - Reliable ordered.
 - Add channels [?];
 - Add message coalescing;
 - Add fragmentation;
 - Review header space usage:
   - Sequence numbers doesn't use whole all 16 bits.
+- Add testbed to test delivery methods.

@@ -33,6 +33,8 @@ public interface ReceiverChannel {
                 return new ReliableReceiverChannel(address, sender, incomingMessagesQueue, cachedMemory, NetConstants.MaxSeqNumbers, NetConstants.ReliableWindowSize);
             case RELIABLE_SEQUENCED:
                 return new ReliableSequencedReceiverChannel(address, sender, incomingMessagesQueue, cachedMemory, NetConstants.MaxSeqNumbers, NetConstants.ReliableWindowSize);
+            case RELIABLE_ORDERED:
+                return new ReliableOrderedReceiverChannel(address, sender, incomingMessagesQueue, cachedMemory, NetConstants.MaxSeqNumbers, NetConstants.ReliableWindowSize);
             default:
                 Logger.debug("Unhandled delivery method!! " + deliveryMethod);
                 return new UnreliableReceiverChannel(incomingMessagesQueue, cachedMemory);

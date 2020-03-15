@@ -41,6 +41,8 @@ public interface SenderChannel {
                 return new ReliableSenderChannel(address, sender, cachedMemory, NetConstants.ReliableWindowSize, NetConstants.MaxSeqNumbers, latencyProvider);
             case RELIABLE_SEQUENCED:
                 return new ReliableSequencedSenderChannel(address, sender, cachedMemory, NetConstants.ReliableWindowSize, NetConstants.MaxSeqNumbers, latencyProvider);
+            case RELIABLE_ORDERED:
+                return new ReliableOrderedSenderChannel(address, sender, cachedMemory, NetConstants.ReliableWindowSize, NetConstants.MaxSeqNumbers, latencyProvider);
             default:
                 Logger.debug("Unhandled delivery method!! " + deliveryMethod);
                 return new UnreliableSenderChannel(address, sender, cachedMemory);

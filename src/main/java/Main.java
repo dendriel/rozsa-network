@@ -1,12 +1,8 @@
-import com.rozsa.network.Connection;
-import com.rozsa.network.NetworkPeer;
-import com.rozsa.network.PeerConfig;
-import com.rozsa.network.DeliveryMethod;
+import com.rozsa.network.*;
 import com.rozsa.network.message.ConnectedMessage;
 import com.rozsa.network.message.DisconnectedMessage;
 import com.rozsa.network.message.IncomingUserDataMessage;
 import com.rozsa.network.message.PingUpdatedMessage;
-import com.rozsa.network.OutgoingMessage;
 
 import java.io.NotActiveException;
 import java.net.SocketException;
@@ -69,7 +65,7 @@ public class Main {
             OutgoingMessage outgoingMsg = peer.createOutgoingMessage(msg.length());
             outgoingMsg.writeString(msg);
 //            outgoingMsg.writeString(String.format(" - extra text!"));
-            peer.sendMessage(conn, outgoingMsg, DeliveryMethod.RELIABLE_SEQUENCED);
+            peer.sendMessage(conn, outgoingMsg, DeliveryMethod.RELIABLE_ORDERED);
         }
 
     }
@@ -98,19 +94,20 @@ public class Main {
             System.arraycopy(msg.getData(), 0, buf, 0, buf.length);
             String val = new String(buf);
 
-//            if (Integer.parseInt(val) != expectedOrder) {
-//                System.out.printf("Received out of order message: %s expected: %d\n", val, expectedOrder);
-//            }
-//            expectedOrder++;
-
-            short seqNumber = Short.parseShort(val);
-            if (seqNumber < expectedOrder) {
-                System.out.printf("Received out of sequence message: %d expected >= %d\n", seqNumber, expectedOrder);
+            if (Integer.parseInt(val) != expectedOrder) {
+                System.out.printf("Received out of order message: %s expected: %d\n", val, expectedOrder);
             }
-            expectedOrder = (short)((seqNumber + 1) % 1024);
+            expectedOrder++;
             messagesReceived++;
 
-            System.out.println("Received message \"" + val + "\" - total: " + messagesReceived);
+//            short seqNumber = Short.parseShort(val);
+//            if (seqNumber < expectedOrder) {
+//                System.out.printf("Received out of sequence message: %d expected >= %d\n", seqNumber, expectedOrder);
+//            }
+//            expectedOrder = (short)((seqNumber + 1) % 1024);
+//            messagesReceived++;
+
+            Logger.info("Received message \"" + val + "\" - total: " + messagesReceived);
 
             peer.recycle(msg);
         }
