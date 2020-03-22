@@ -13,7 +13,7 @@ class AckMessageHandler implements IncomingMessageHandler {
     }
 
     @Override
-    public void handle(Address addr, DeliveryMethod deliveryMethod, short seqNumber, byte[] data, int length) {
+    public void handle(Address addr, MessageType type, short seqNumber, byte[] data, int length) {
         Connection conn = connHolder.getConnection(addr.getId());
         if (conn == null) {
             cachedMemory.freeBuffer(data);
@@ -29,8 +29,13 @@ class AckMessageHandler implements IncomingMessageHandler {
                 Logger.warn("Received ack while in an invalid state. Source %s.", addr);
                 break;
             case CONNECTED:
-                IncomingMessage ackMsg = new IncomingMessage(IncomingMessageType.ACK, conn, seqNumber, data, length);
-                conn.ackReceived(ackMsg, deliveryMethod);
+                if (length == 0) {
+                    Logger.error("Invalid ack format.");
+                    return;
+                }
+                MessageType messageType = MessageType.from(data[0]);
+                IncomingMessage ackMsg = new IncomingMessage(IncomingMessageType.ACK, conn, seqNumber, data, length, messageType);
+                conn.ackReceived(ackMsg, messageType);
                 break;
             case DISCONNECTED:
                 Logger.warn("Already disconnected from source %s. Won't process the ack.", addr);

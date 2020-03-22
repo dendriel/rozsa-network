@@ -63,7 +63,11 @@ public class NetworkPeer {
     }
 
     public void sendMessage(Connection conn, OutgoingMessage msg, DeliveryMethod deliveryMethod) {
-        peer.sendMessage(conn, msg, deliveryMethod);
+        sendMessage(conn, msg, deliveryMethod, 0);
+    }
+
+    public void sendMessage(Connection conn, OutgoingMessage msg, DeliveryMethod deliveryMethod, int channel) {
+        peer.sendMessage(conn, msg, deliveryMethod, channel);
     }
 
     public OutgoingMessage createOutgoingMessage(int length) {

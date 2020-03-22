@@ -1,6 +1,8 @@
 package com.rozsa.network.message;
 
 import com.rozsa.network.Connection;
+import com.rozsa.network.DeliveryMethod;
+import com.rozsa.network.MessageType;
 
 import java.util.Objects;
 
@@ -9,18 +11,20 @@ public class IncomingMessage {
     private final byte[] data;
     private final int length;
     private final short seqNumber;
+    private final MessageType messageType;
     private Connection connection;
 
     IncomingMessage(IncomingMessageType type, Connection connection) {
-        this(type, connection, (short)0, null, 0);
+        this(type, connection, (short)0, null, 0, MessageType.UNKNOWN);
     }
 
-    public IncomingMessage(IncomingMessageType type, Connection connection, short seqNumber, byte[] data, int length) {
+    public IncomingMessage(IncomingMessageType type, Connection connection, short seqNumber, byte[] data, int length, MessageType messageType) {
         this.type = type;
         this.connection = connection;
         this.seqNumber = seqNumber;
         this.data = data;
         this.length = length;
+        this.messageType = messageType;
     }
 
     public short getSeqNumber() {
@@ -33,6 +37,14 @@ public class IncomingMessage {
 
     public IncomingMessageType getType() {
         return type;
+    }
+
+    public DeliveryMethod getDeliveryMethod() {
+        return DeliveryMethod.from(messageType.getBaseId());
+    }
+
+    public int getChannel() {
+        return messageType.getOffset();
     }
 
     public byte[] getData() {

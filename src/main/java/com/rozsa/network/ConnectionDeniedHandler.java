@@ -8,7 +8,7 @@ public class ConnectionDeniedHandler implements IncomingMessageHandler {
     }
 
     @Override
-    public void handle(Address addr, DeliveryMethod deliveryMethod, short seqNumber, byte[] data, int length) {
+    public void handle(Address addr, MessageType type, short seqNumber, byte[] data, int length) {
         cachedMemory.freeBuffer(data);
     }
 }

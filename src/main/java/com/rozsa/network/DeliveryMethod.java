@@ -3,11 +3,14 @@ package com.rozsa.network;
 import java.util.HashMap;
 
 public enum DeliveryMethod {
-    UNRELIABLE(0),
-    UNRELIABLE_SEQUENCED(1),
-    RELIABLE(2),
-    RELIABLE_SEQUENCED(3),
-    RELIABLE_ORDERED(4),
+    UNRELIABLE(9),
+    RELIABLE(10),
+    // 32-63
+    UNRELIABLE_SEQUENCED(32),
+    // 64-95
+    RELIABLE_SEQUENCED(64),
+    // 96-127
+    RELIABLE_ORDERED(96),
     ;
 
     private final byte id;

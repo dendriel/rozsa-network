@@ -5,8 +5,10 @@ import com.rozsa.network.message.IncomingMessage;
 import java.io.NotActiveException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.security.InvalidParameterException;
 
 import static com.rozsa.network.ConnectionState.*;
+import static com.rozsa.network.DeliveryMethod.*;
 
 public class Peer {
     private final PeerConfig config;
@@ -83,8 +85,16 @@ public class Peer {
         conn.setState(DISCONNECTED);
     }
 
-    public void sendMessage(Connection conn, OutgoingMessage msg, DeliveryMethod deliveryMethod) {
-        conn.enqueueOutgoingMessage(msg, deliveryMethod);
+    public void sendMessage(Connection conn, OutgoingMessage msg, DeliveryMethod deliveryMethod, int channel) {
+        if (channel >= NetConstants.MaxChannelsPerDeliveryMethod ||
+            (!deliveryMethod.equals(UNRELIABLE_SEQUENCED) &&
+            !deliveryMethod.equals(RELIABLE_SEQUENCED) &&
+            !deliveryMethod.equals(RELIABLE_ORDERED))) {
+            throw new InvalidParameterException(String.format("There are %d (0-%d) channels to be used with ordered and sequenced delivery methods. Invalid channel: %d",
+                    NetConstants.MaxChannelsPerDeliveryMethod-1, NetConstants.MaxChannelsPerDeliveryMethod, channel));
+        }
+
+        conn.enqueueOutgoingMessage(msg, deliveryMethod, channel);
     }
 
     private void assertInitialized() throws NotActiveException {

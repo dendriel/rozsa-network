@@ -7,12 +7,13 @@ import com.rozsa.network.message.PingUpdatedMessage;
 import java.io.NotActiveException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.Random;
 
 public class Main {
     public static void main(String[] args) throws SocketException, NotActiveException, UnknownHostException, InterruptedException {
         int serverPort = 9090;
         int clientPort = 8989;
-        isServer = true;
+//        isServer = true;
 
         int targetPort = isServer ? serverPort : clientPort;
 
@@ -60,12 +61,14 @@ public class Main {
             e.printStackTrace();
         }
 
+        Random random = new Random();
+
         for (int i = 0;  i < count; i++) {
             String msg = String.valueOf(i);
             OutgoingMessage outgoingMsg = peer.createOutgoingMessage(msg.length());
             outgoingMsg.writeString(msg);
 //            outgoingMsg.writeString(String.format(" - extra text!"));
-            peer.sendMessage(conn, outgoingMsg, DeliveryMethod.RELIABLE_ORDERED);
+            peer.sendMessage(conn, outgoingMsg, DeliveryMethod.UNRELIABLE_SEQUENCED, random.nextInt(32));
         }
 
     }
@@ -107,7 +110,7 @@ public class Main {
 //            expectedOrder = (short)((seqNumber + 1) % 1024);
 //            messagesReceived++;
 
-            Logger.info("Received message \"" + val + "\" - total: " + messagesReceived);
+            Logger.info("Received message \"" + val + "\" - total: " + messagesReceived + " " + msg.getDeliveryMethod() + " " + msg.getChannel());
 
             peer.recycle(msg);
         }

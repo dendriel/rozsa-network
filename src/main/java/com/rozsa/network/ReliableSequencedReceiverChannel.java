@@ -10,9 +10,10 @@ class ReliableSequencedReceiverChannel extends ReliableReceiverChannel {
             IncomingMessagesQueue incomingMessagesQueue,
             CachedMemory cachedMemory,
             short maxSeqNumber,
-            short windowSize
+            short windowSize,
+            int channelId
     ) {
-        super(addr, sender, incomingMessagesQueue, cachedMemory, maxSeqNumber, windowSize, DeliveryMethod.RELIABLE_SEQUENCED);
+        super(addr, sender, incomingMessagesQueue, cachedMemory, maxSeqNumber, windowSize, DeliveryMethod.RELIABLE_SEQUENCED, channelId);
     }
 
     @Override

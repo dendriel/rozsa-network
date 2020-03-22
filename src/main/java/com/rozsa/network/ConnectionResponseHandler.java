@@ -21,7 +21,7 @@ class ConnectionResponseHandler implements IncomingMessageHandler {
     }
 
     @Override
-    public void handle(Address addr, DeliveryMethod method, short seqNumber, byte[] data, int length) {
+    public void handle(Address addr, MessageType type, short seqNumber, byte[] data, int length) {
         Connection conn = connHolder.getHandshakeOrConnection(addr.getId());
         if (conn == null) {
             conn = connHolder.createAsIncomingHandshake(addr);
@@ -35,11 +35,11 @@ class ConnectionResponseHandler implements IncomingMessageHandler {
                 conn.setConnected();
                 connHolder.promoteConnection(conn);
                 incomingMessages.enqueue(new ConnectedMessage(conn));
-                packetSender.sendProtocol(conn.getAddress(), MessageType.CONNECTION_ESTABLISHED, method, (short)0);
+                packetSender.sendProtocol(conn.getAddress(), MessageType.CONNECTION_ESTABLISHED, (short)0);
                 break;
             case CONNECTED:
                 // already connected to peer. Resend connect established.
-                packetSender.sendProtocol(conn.getAddress(), MessageType.CONNECTION_ESTABLISHED, method, (short)0);
+                packetSender.sendProtocol(conn.getAddress(), MessageType.CONNECTION_ESTABLISHED, (short)0);
                 break;
             case DISCONNECTED:
             default:

@@ -9,6 +9,7 @@ import java.util.function.LongSupplier;
 
 class ReliableSenderChannel implements SenderChannel {
     protected final DeliveryMethod type;
+    protected final byte channelId;
     protected final ConcurrentLinkedQueue<OutgoingMessage> outgoingMessages;
     protected final PacketSender sender;
     protected final Address addr;
@@ -33,7 +34,7 @@ class ReliableSenderChannel implements SenderChannel {
             short maxSeqNumbers,
             LongSupplier resendDelayProvider
     ) {
-        this(address, sender, cachedMemory, windowSize, maxSeqNumbers, resendDelayProvider, DeliveryMethod.RELIABLE);
+        this(address, sender, cachedMemory, windowSize, maxSeqNumbers, resendDelayProvider, DeliveryMethod.RELIABLE, 0);
     }
 
     ReliableSenderChannel(
@@ -43,9 +44,11 @@ class ReliableSenderChannel implements SenderChannel {
             short windowSize,
             short maxSeqNumbers,
             LongSupplier resendDelayProvider,
-            DeliveryMethod type
+            DeliveryMethod type,
+            int channelId
     ) {
         this.type = type;
+        this.channelId = (byte)(type.getId() + channelId);
         this.addr = address;
         this.sender = sender;
         this.windowSize = windowSize;
@@ -91,8 +94,10 @@ class ReliableSenderChannel implements SenderChannel {
             handleAck(ack.getSeqNumber());
 
             byte[] receivedAcks = ack.getData();
+
+            // skip 1 byte from payload (this byte carries the channel type).
             for (int i = 0; i < (ack.getLength() / 2); i++) {
-                int ackIdx = i * 2;
+                int ackIdx = i * 2 + 1;
                 short ackNumber = (short)((receivedAcks[ackIdx++] & 0xff) << 8);
                 ackNumber = (short)(ackNumber | (receivedAcks[ackIdx] & 0xff));
                 ackNumber = (short)(ackNumber % maxSeqNumbers);
@@ -142,8 +147,7 @@ class ReliableSenderChannel implements SenderChannel {
             int bufSize = msg.getDataWritten() + NetConstants.MsgHeaderSize;
             byte[] buf = cachedMemory.allocBuffer(bufSize);
             int bufIdx = 0;
-            buf[bufIdx++] = MessageType.USER_DATA.getId();
-            buf[bufIdx++] = type.getId();
+            buf[bufIdx++] = channelId;
             buf[bufIdx++] = (byte)((seqNumber >> 8) & 0xFF);
             buf[bufIdx++] = (byte)(seqNumber & 0xFF);
 

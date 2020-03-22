@@ -3,10 +3,9 @@ package com.rozsa.network;
 class NetConstants {
     /**
      * 1 byte - message type
-     * 1 byte - delivery method
      * 2 bytes - sequence number
      */
-    static final int MsgHeaderSize = 4;
+    static final int MsgHeaderSize = 3;
     static final int MessageTypeHeaderIdx = 0;
     static final int DeliveryMethodHeaderIdx = 1;
 
@@ -16,6 +15,11 @@ class NetConstants {
      * Maximum number of messages peer loop will receive in a single interaction.
      */
     static final short ReceiveMessagesThreshold = 128;
+
+    /**
+     * Maximum number of delivery channels (only for sequenced and ordered types).
+     */
+    static final int MaxChannelsPerDeliveryMethod = 32;
 
     static final int DefaultMaximumHandshakeAttempts = 5;
     static final long DefaultIntervalBetweenHandshakesInMillis = 1000;

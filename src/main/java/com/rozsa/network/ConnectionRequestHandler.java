@@ -23,7 +23,7 @@ class ConnectionRequestHandler implements IncomingMessageHandler {
     }
 
     @Override
-    public void handle(Address addr, DeliveryMethod method, short seqNumber, byte[] data, int length) {
+    public void handle(Address addr, MessageType type, short seqNumber, byte[] data, int length) {
         Connection conn = connHolder.getHandshake(addr.getId());
         if (conn == null) {
             conn = connHolder.createAsIncomingHandshake(addr);
@@ -35,7 +35,7 @@ class ConnectionRequestHandler implements IncomingMessageHandler {
             case DISCONNECTED:
                 // if disconnected, send connect response and await for connect established.
                 conn.setAwaitingConnectEstablished();
-                packetSender.sendProtocol(conn.getAddress(), MessageType.CONNECTION_RESPONSE, method, (short)0);
+                packetSender.sendProtocol(conn.getAddress(), MessageType.CONNECTION_RESPONSE, (short)0);
                 break;
 
             case SEND_CONNECT_REQUEST:
@@ -44,12 +44,12 @@ class ConnectionRequestHandler implements IncomingMessageHandler {
                 // if received connect request while sending connect request itself, establish the connection right away.
                 incomingMessages.enqueue(new ConnectedMessage(conn));
                 connHolder.promoteConnection(conn);
-                packetSender.sendProtocol(conn.getAddress(), MessageType.CONNECTION_ESTABLISHED, method, (short)0);
+                packetSender.sendProtocol(conn.getAddress(), MessageType.CONNECTION_ESTABLISHED, (short)0);
                 break;
 
             case CONNECTED:
                 // already connected to peer. Resend connect response.
-                packetSender.sendProtocol(conn.getAddress(), MessageType.CONNECTION_RESPONSE, method, (short)0);
+                packetSender.sendProtocol(conn.getAddress(), MessageType.CONNECTION_RESPONSE, (short)0);
                 break;
             default:
                 break;

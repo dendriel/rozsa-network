@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 class UnreliableSenderChannel implements SenderChannel {
     protected final DeliveryMethod type;
+    protected final byte channelId;
     protected final PacketSender sender;
     protected final Address addr;
     protected final CachedMemory cachedMemory;
@@ -15,14 +16,15 @@ class UnreliableSenderChannel implements SenderChannel {
     private short seqNumber;
 
     UnreliableSenderChannel(Address addr, PacketSender sender, CachedMemory cachedMemory) {
-        this(addr, sender, cachedMemory, DeliveryMethod.UNRELIABLE, (short)1);
+        this(addr, sender, cachedMemory, DeliveryMethod.UNRELIABLE, (short)1, 0);
     }
 
-    UnreliableSenderChannel(Address addr, PacketSender sender, CachedMemory cachedMemory, DeliveryMethod type, short maxSeqNumbers) {
+    UnreliableSenderChannel(Address addr, PacketSender sender, CachedMemory cachedMemory, DeliveryMethod type, short maxSeqNumbers, int channelId) {
         this.sender = sender;
         this.addr = addr;
         this.cachedMemory = cachedMemory;
         this.type = type;
+        this.channelId = (byte)(type.getId() + channelId);
         this.maxSeqNumbers = maxSeqNumbers;
         outgoingMessages = new ConcurrentLinkedQueue<>();
     }
@@ -40,8 +42,7 @@ class UnreliableSenderChannel implements SenderChannel {
             int bufSize = msg.getDataWritten() + NetConstants.MsgHeaderSize;
             byte[] buf = cachedMemory.allocBuffer(bufSize);
             int bufIdx = 0;
-            buf[bufIdx++] = MessageType.USER_DATA.getId();
-            buf[bufIdx++] = type.getId();
+            buf[bufIdx++] = channelId;
             buf[bufIdx++] = (byte)((seqNumber >> 8) & 0xFF);
             buf[bufIdx++] = (byte)(seqNumber & 0xFF);
 

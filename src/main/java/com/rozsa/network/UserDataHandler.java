@@ -2,6 +2,7 @@ package com.rozsa.network;
 
 import com.rozsa.network.message.ConnectedMessage;
 import com.rozsa.network.message.IncomingUserDataMessage;
+import sun.plugin2.message.Message;
 
 class UserDataHandler implements IncomingMessageHandler {
     private final ConnectionHolder connHolder;
@@ -19,7 +20,7 @@ class UserDataHandler implements IncomingMessageHandler {
     }
 
     @Override
-    public void handle(Address addr, DeliveryMethod method, short seqNumber, byte[] data, int length) {
+    public void handle(Address addr, MessageType type, short seqNumber, byte[] data, int length) {
         Connection conn = connHolder.getHandshakeOrConnection(addr.getId());
         if (conn == null) {
             cachedMemory.freeBuffer(data);
@@ -35,8 +36,8 @@ class UserDataHandler implements IncomingMessageHandler {
                 connHolder.promoteConnection(conn);
                 incomingMessages.enqueue(new ConnectedMessage(conn));
             case CONNECTED:
-                IncomingUserDataMessage dataMessage = new IncomingUserDataMessage(conn, seqNumber, data, length);
-                conn.enqueueIncomingMessage(dataMessage, method);
+                IncomingUserDataMessage dataMessage = new IncomingUserDataMessage(conn, seqNumber, data, length, type);
+                conn.enqueueIncomingMessage(dataMessage, DeliveryMethod.from(type.getBaseId()), type.getOffset());
                 break;
             case AWAITING_CONNECT_RESPONSE:
             case SEND_CONNECT_REQUEST:

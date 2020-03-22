@@ -23,8 +23,8 @@ public class Connection {
     private DisconnectReason disconnectReason;
 
     // TODO: testing purpose
-    private ConcurrentHashMap<DeliveryMethod, SenderChannel> senderChannels;
-    private ConcurrentHashMap<DeliveryMethod, ReceiverChannel> receiverChannels;
+    private ConcurrentHashMap<Byte, SenderChannel> senderChannels;
+    private ConcurrentHashMap<Byte, ReceiverChannel> receiverChannels;
 
 
     Connection(PeerConfig config, Address address, PacketSender sender, IncomingMessagesQueue incomingMessages, CachedMemory cachedMemory) {
@@ -101,32 +101,34 @@ public class Connection {
         return false;
     }
 
-    void enqueueOutgoingMessage(OutgoingMessage msg, DeliveryMethod deliveryMethod) {
-        SenderChannel channel = getOrCreateSenderChannel(deliveryMethod);
+    void enqueueOutgoingMessage(OutgoingMessage msg, DeliveryMethod deliveryMethod, int channelId) {
+        SenderChannel channel = getOrCreateSenderChannel(deliveryMethod, channelId);
         channel.enqueue(msg);
     }
 
-    void enqueueIncomingMessage(IncomingMessage msg, DeliveryMethod deliveryMethod) {
-        ReceiverChannel channel = getOrCreateReceiverChannel(deliveryMethod);
+    void enqueueIncomingMessage(IncomingMessage msg, DeliveryMethod deliveryMethod, int channelId) {
+        ReceiverChannel channel = getOrCreateReceiverChannel(deliveryMethod, channelId);
         channel.enqueue(msg);
     }
 
-    private SenderChannel getOrCreateSenderChannel(DeliveryMethod deliveryMethod) {
-        senderChannels.computeIfAbsent(deliveryMethod, this::createSenderChannel);
-        return senderChannels.get(deliveryMethod);
+    private SenderChannel getOrCreateSenderChannel(DeliveryMethod deliveryMethod, int channelId) {
+        byte channelIndex = (byte)(deliveryMethod.getId() + channelId);
+        senderChannels.computeIfAbsent(channelIndex, c -> createSenderChannel(deliveryMethod, channelId));
+        return senderChannels.get(channelIndex);
     }
 
-    private SenderChannel createSenderChannel(DeliveryMethod deliveryMethod) {
-        return SenderChannel.create(deliveryMethod, address, sender, cachedMemory, heartbeat::getResendDelay);
+    private SenderChannel createSenderChannel(DeliveryMethod deliveryMethod, int channelId) {
+        return SenderChannel.create(deliveryMethod, channelId, address, sender, cachedMemory, heartbeat::getResendDelay);
     }
 
-    private ReceiverChannel getOrCreateReceiverChannel(DeliveryMethod deliveryMethod) {
-        receiverChannels.computeIfAbsent(deliveryMethod, this::createReceiverChannel);
-        return receiverChannels.get(deliveryMethod);
+    private ReceiverChannel getOrCreateReceiverChannel(DeliveryMethod deliveryMethod, int channelId) {
+        byte channelIndex = (byte)(deliveryMethod.getId() + channelId);
+        receiverChannels.computeIfAbsent(channelIndex, c -> createReceiverChannel(deliveryMethod, channelId));
+        return receiverChannels.get(channelIndex);
     }
 
-    private ReceiverChannel createReceiverChannel(DeliveryMethod deliveryMethod) {
-        return ReceiverChannel.create(deliveryMethod, address, sender, incomingMessages, cachedMemory);
+    private ReceiverChannel createReceiverChannel(DeliveryMethod deliveryMethod, int channelId) {
+        return ReceiverChannel.create(deliveryMethod, channelId, address, sender, incomingMessages, cachedMemory);
     }
 
     void pingReceived(short seqNumber) {
@@ -137,8 +139,8 @@ public class Connection {
         heartbeat.pongReceived(seqNumber);
     }
 
-    void ackReceived(IncomingMessage ack, DeliveryMethod method) {
-        SenderChannel channel = getOrCreateSenderChannel(method);
+    void ackReceived(IncomingMessage ack, MessageType type) {
+        SenderChannel channel = getOrCreateSenderChannel(DeliveryMethod.from(type.getBaseId()), type.getOffset());
         channel.enqueueAck(ack);
     }
 
@@ -175,7 +177,7 @@ public class Connection {
             return;
         }
 
-        sender.sendProtocol(address, MessageType.CONNECTION_REQUEST, DeliveryMethod.UNRELIABLE, (short)0);
+        sender.sendProtocol(address, MessageType.CONNECTION_REQUEST, (short)0);
 
         state = AWAITING_CONNECT_RESPONSE;
 

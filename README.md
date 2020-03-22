@@ -11,6 +11,7 @@ Simple Reliable UDP (RUDP) com.rozsa.network library in Java made by me =].
 - Disconnection reason;
 - Synchronized network events delivery (NetworkPeer.read() may return a data message or execute an event method);
 - Data delivery;
+- 32 channels for each reliable and sequenced delivery method;
 - Flow control for reliable delivery methods (uses a sliding window);
 - Data buffer recycling.
 
@@ -34,13 +35,34 @@ Simple Reliable UDP (RUDP) com.rozsa.network library in Java made by me =].
 2 bytes - sequence number
 ```
 
+# Channels
+
+Effectively, a channel is a tag that one can check in an incoming message to sort the message when processing it. So we have:
+
+- 32 unreliable sequenced channels;
+- 32 reliable sequenced channels;
+- 32 reliable ordered channels.
+
+To use a channel just pass its ID when sending a message using one of the above delivery methos:
+```
+// send an unreliable sequenced message at channel 7.
+peer.sendMessage(conn, outgoingMsg, DeliveryMethod.UNRELIABLE_SEQUENCED, 7);
+
+// send an reliable sequenced message at channel 31.
+peer.sendMessage(conn, outgoingMsg, DeliveryMethod.RELIABLE_SEQUENCED, 31);
+
+// send an reliable sequenced message at channel 0.
+peer.sendMessage(conn, outgoingMsg, DeliveryMethod.RELIABLE_ORDERED);
+```
+
+*When the channel is omitted, channel 0 is automatically used.
+
 # TODO
 
-- Add channels [?];
 - Add message coalescing;
 - Add fragmentation;
 - Review header space usage:
-  - Sequence numbers doesn't use whole all 16 bits.
+  - Sequence numbers doesn't use all 16 bits.
 - Add testbed to test delivery methods;
 - Peer and connection statistics (peer and connection):
   - Bytes sent/received;

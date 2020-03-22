@@ -9,9 +9,10 @@ class ReliableSequencedSenderChannel extends ReliableSenderChannel {
             CachedMemory cachedMemory,
             short windowSize,
             short maxSeqNumbers,
-            LongSupplier resendDelayProvider
+            LongSupplier resendDelayProvider,
+            int channelId
     ) {
-        super(address, sender, cachedMemory, windowSize, maxSeqNumbers, resendDelayProvider, DeliveryMethod.RELIABLE_SEQUENCED);
+        super(address, sender, cachedMemory, windowSize, maxSeqNumbers, resendDelayProvider, DeliveryMethod.RELIABLE_SEQUENCED, channelId);
     }
 
     @Override

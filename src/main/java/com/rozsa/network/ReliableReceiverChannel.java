@@ -14,6 +14,7 @@ class ReliableReceiverChannel implements ReceiverChannel {
     protected final Set<Short> acksToSend;
 
     protected final DeliveryMethod type;
+    protected final byte channelId;
     protected final ConcurrentLinkedQueue<IncomingMessage> incomingMessages;
     protected final IncomingMessagesQueue incomingMessagesQueue;
 
@@ -29,7 +30,7 @@ class ReliableReceiverChannel implements ReceiverChannel {
             short maxSeqNumber,
             short windowSize
     ) {
-        this(addr, sender, incomingMessagesQueue, cachedMemory, maxSeqNumber, windowSize, DeliveryMethod.RELIABLE);
+        this(addr, sender, incomingMessagesQueue, cachedMemory, maxSeqNumber, windowSize, DeliveryMethod.RELIABLE,0);
     }
 
     ReliableReceiverChannel(
@@ -39,7 +40,8 @@ class ReliableReceiverChannel implements ReceiverChannel {
             CachedMemory cachedMemory,
             short maxSeqNumber,
             short windowSize,
-            DeliveryMethod type
+            DeliveryMethod type,
+            int channelId
     ) {
         this.addr = addr;
         this.sender = sender;
@@ -47,6 +49,7 @@ class ReliableReceiverChannel implements ReceiverChannel {
         this.maxSeqNumber = maxSeqNumber;
         this.windowSize = windowSize;
         this.type = type;
+        this.channelId = (byte)(type.getId() + channelId);
         this.incomingMessagesQueue = incomingMessagesQueue;
 
         expectedSeqNumber = 0;
@@ -68,22 +71,32 @@ class ReliableReceiverChannel implements ReceiverChannel {
         sendAcks();
     }
 
+    /**
+     * ACK header:
+     *
+     * 1 byte - message type.
+     * 2 bytes - first ack (instead of seq number)
+     * 1 byte = channel id.
+     * ?*2 bytes = remaining acks.
+     *
+     */
     private void sendAcks() {
         if (acksToSend.isEmpty()) {
             return;
         }
 
-        int payloadSize = (acksToSend.size() - 1) * 2 + NetConstants.MsgHeaderSize;
+        int payloadSize = NetConstants.MsgHeaderSize + 1 + (acksToSend.size() - 1) * 2;
         byte[] buf = cachedMemory.allocBuffer(payloadSize);
 
         int bufIdx = 0;
         buf[bufIdx++] = MessageType.ACK.getId();
-        buf[bufIdx++] = type.getId();
 
         Iterator<Short> acksIt = acksToSend.iterator();
         Short seqNumber = acksIt.next();
         buf[bufIdx++] = (byte)((seqNumber >> 8) & 0xFF);
         buf[bufIdx++] = (byte)(seqNumber & 0xFF);
+
+        buf[bufIdx++] = channelId;
 
         while (acksIt.hasNext()) {
             Short ack = acksIt.next();

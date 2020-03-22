@@ -16,9 +16,10 @@ public class ReliableOrderedReceiverChannel extends ReliableReceiverChannel {
             IncomingMessagesQueue incomingMessagesQueue,
             CachedMemory cachedMemory,
             short maxSeqNumber,
-            short windowSize
+            short windowSize,
+            int channelId
     ) {
-        super(addr, sender, incomingMessagesQueue, cachedMemory, maxSeqNumber, windowSize, DeliveryMethod.RELIABLE_ORDERED);
+        super(addr, sender, incomingMessagesQueue, cachedMemory, maxSeqNumber, windowSize, DeliveryMethod.RELIABLE_ORDERED, channelId);
         withholdMessages = new HashMap<>();
         expectedSeqNumber = 0;
     }

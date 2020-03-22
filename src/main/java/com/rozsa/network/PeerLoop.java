@@ -13,6 +13,7 @@ public class PeerLoop extends Thread implements PacketSender {
     private final IncomingMessagesQueue incomingMessages;
     private final CachedMemory cachedMemory;
     private final int recvMessagesThreshold;
+    private final UserDataHandler userDataHandler;
 
     private EnumMap<MessageType, IncomingMessageHandler> messageHandlers;
     private volatile boolean isRunning;
@@ -30,6 +31,7 @@ public class PeerLoop extends Thread implements PacketSender {
         isRunning = true;
         initializeHandlers();
 
+        userDataHandler = new UserDataHandler(connHolder, cachedMemory, incomingMessages);
         this.recvMessagesThreshold = recvMessagesThreshold;
 
         udpSocket = new UDPSocket(config.getPort(), 1, config.getReceiveBufferSize());
@@ -46,7 +48,6 @@ public class PeerLoop extends Thread implements PacketSender {
         messageHandlers.put(MessageType.PING, new PingMessageHandler(connHolder, cachedMemory));
         messageHandlers.put(MessageType.PONG, new PongMessageHandler(connHolder, cachedMemory));
         messageHandlers.put(MessageType.ACK, new AckMessageHandler(connHolder, cachedMemory));
-        messageHandlers.put(MessageType.USER_DATA, new UserDataHandler(connHolder, cachedMemory, incomingMessages));
     }
 
     public void run() {
@@ -82,12 +83,11 @@ public class PeerLoop extends Thread implements PacketSender {
         }
     }
 
-    public void sendProtocol(Address addr, MessageType type, DeliveryMethod method, short seqNumber) {
+    public void sendProtocol(Address addr, MessageType type, short seqNumber) {
         byte[] data = cachedMemory.allocBuffer(NetConstants.MsgHeaderSize);
 
         int bufIdx = 0;
         data[bufIdx++] = type.getId();
-        data[bufIdx++] = method.getId();
         data[bufIdx++] = (byte)((seqNumber >> 8) & 0xFF);
         data[bufIdx] = (byte)(seqNumber & 0xFF);
         udpSocket.send(addr.getNetAddress(), addr.getPort(), data, NetConstants.MsgHeaderSize);
@@ -119,7 +119,7 @@ public class PeerLoop extends Thread implements PacketSender {
         incomingMessages.enqueue(disconnectedMessage);
 
         if (reason == DisconnectReason.LOCAL_CLOSE) {
-            sendProtocol(conn.getAddress(), MessageType.CONNECTION_CLOSED, DeliveryMethod.UNRELIABLE, (short)0);
+            sendProtocol(conn.getAddress(), MessageType.CONNECTION_CLOSED, (short)0);
         }
     }
 
@@ -144,7 +144,6 @@ public class PeerLoop extends Thread implements PacketSender {
 
         // deserialize header
         MessageType type = MessageType.from(buf[dataIdx++]);
-        DeliveryMethod method = DeliveryMethod.from(buf[dataIdx++]);
         int seqNumber = (buf[dataIdx++] & 0xFF) << 8;
         seqNumber = seqNumber | (buf[dataIdx++] & 0xFF);
 
@@ -153,8 +152,8 @@ public class PeerLoop extends Thread implements PacketSender {
         byte[] data = cachedMemory.allocBuffer(dataLen);
         System.arraycopy(buf, dataIdx, data, 0, dataLen);
 
-        IncomingMessageHandler handler = messageHandlers.getOrDefault(type, new UnknownMessageHandler(cachedMemory));
-        handler.handle(addr, method, (short)seqNumber, data, dataLen);
+        IncomingMessageHandler handler = messageHandlers.getOrDefault(type, userDataHandler);
+        handler.handle(addr, type, (short)seqNumber, data, dataLen);
 
         return false;
     }

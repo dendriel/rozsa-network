@@ -64,12 +64,12 @@ class ConnectionHeartbeat {
     private void sendPing() {
         lastSentPingTime = Clock.getCurrentTimeInNanos();
         lastPingSentSeqNumber = currSeqNumber++;
-        sender.sendProtocol(conn.getAddress(), MessageType.PING, UNRELIABLE, lastPingSentSeqNumber);
+        sender.sendProtocol(conn.getAddress(), MessageType.PING, lastPingSentSeqNumber);
     }
 
     void pingReceived(short seqNumber) {
         lastReceivedPingTime = Clock.getCurrentTimeInNanos();
-        sender.sendProtocol(conn.getAddress(), MessageType.PONG, UNRELIABLE, seqNumber);
+        sender.sendProtocol(conn.getAddress(), MessageType.PONG, seqNumber);
     }
 
     void pongReceived(short seqNumber) {

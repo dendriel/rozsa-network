@@ -5,8 +5,9 @@ class UnreliableSequencedSenderChannel extends UnreliableSenderChannel {
             Address addr,
             PacketSender sender,
             CachedMemory cachedMemory,
-            short maxSeqNumbers
+            short maxSeqNumbers,
+            int channelId
     ) {
-        super(addr, sender, cachedMemory, DeliveryMethod.UNRELIABLE_SEQUENCED, maxSeqNumbers);
+        super(addr, sender, cachedMemory, DeliveryMethod.UNRELIABLE_SEQUENCED, maxSeqNumbers, channelId);
     }
 }
