@@ -2,6 +2,7 @@ package com.rozsa.network;
 
 import com.rozsa.network.message.IncomingMessage;
 import com.rozsa.network.message.IncomingMessageType;
+import com.rozsa.network.message.IncomingUserDataMessage;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -16,11 +17,13 @@ class ReliableReceiverChannel implements ReceiverChannel {
     protected final DeliveryMethod type;
     protected final byte channelId;
     protected final ConcurrentLinkedQueue<IncomingMessage> incomingMessages;
-    protected final IncomingMessagesQueue incomingMessagesQueue;
+    private final IncomingMessagesQueue incomingMessagesQueue;
 
     protected short expectedSeqNumber;
     protected short maxSeqNumber;
     protected short windowSize;
+
+    protected Map<Integer, IncomingMessage> withholdFragments;
 
     ReliableReceiverChannel(
             Address addr,
@@ -56,6 +59,7 @@ class ReliableReceiverChannel implements ReceiverChannel {
         acksToSend = new HashSet<>();
         withholdSeqNumbers = new HashSet<>();
         incomingMessages = new ConcurrentLinkedQueue<>();
+        withholdFragments = new HashMap<>();
     }
 
     public void enqueue(IncomingMessage msg) {
@@ -93,8 +97,8 @@ class ReliableReceiverChannel implements ReceiverChannel {
 
         Iterator<Short> acksIt = acksToSend.iterator();
         Short seqNumber = acksIt.next();
-        buf[bufIdx++] = (byte)((seqNumber >> 8) & 0xFF);
-        buf[bufIdx++] = (byte)(seqNumber & 0xFF);
+        buf[bufIdx++] = (byte)((seqNumber << 1));
+        buf[bufIdx++] = (byte)(seqNumber >> 7);
 
         buf[bufIdx++] = channelId;
 
@@ -143,7 +147,38 @@ class ReliableReceiverChannel implements ReceiverChannel {
     }
 
     protected void dispatch(IncomingMessage message) {
+        if (!message.isFrag()) {
+            incomingMessagesQueue.enqueue(message);
+            return;
+        }
+
+        int fragGroup = message.getFragGroup();
+        if (!withholdFragments.containsKey(fragGroup)) {
+            int dataLength = message.getFragGroupLength();
+            byte[] data = cachedMemory.allocBuffer(dataLength);
+            IncomingMessage rootFrag = new IncomingUserDataMessage(
+                    message.getConnection(),
+                    message.getSeqNumber(),
+                    data, dataLength,
+                    message.getMessageType(),
+                    false
+            );
+
+            withholdFragments.put(fragGroup, rootFrag);
+        }
+
+        IncomingMessage rootFrag = withholdFragments.get(fragGroup);
+        rootFrag.combine(message);
+        cachedMemory.freeBuffer(message.getData());
+
+        if (rootFrag.isComplete()) {
+            dispatchFragment(rootFrag);
+        }
+    }
+
+    protected void dispatchFragment(IncomingMessage message) {
         incomingMessagesQueue.enqueue(message);
+        withholdFragments.remove(message.getFragGroup());
     }
 
     private void updateExpectedSeqNumber() {

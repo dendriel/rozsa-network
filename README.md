@@ -11,6 +11,7 @@ Simple Reliable UDP (RUDP) com.rozsa.network library in Java made by me =].
 - Disconnection reason;
 - Synchronized network events delivery (NetworkPeer.read() may return a data message or execute an event method);
 - Data delivery;
+- Data fragmentation for reliable delivery methods;
 - 32 channels for each reliable and sequenced delivery method;
 - Flow control for reliable delivery methods (uses a sliding window);
 - Data buffer recycling.
@@ -30,9 +31,12 @@ Simple Reliable UDP (RUDP) com.rozsa.network library in Java made by me =].
 4 bytes size:
 
 ```
-1 byte - message type
-1 byte - delivery method
-2 bytes - sequence number
+8 bits - message type
+15 bits - sequence number
+1 bit - is fragment?
+16 bits - fragment group;
+16 bits - fragment total length;
+16 bits - fragment offset.
 ```
 
 # Channels
@@ -57,14 +61,29 @@ peer.sendMessage(conn, outgoingMsg, DeliveryMethod.RELIABLE_ORDERED);
 
 *When the channel is omitted, channel 0 is automatically used.
 
+# Fragmentation
+Fragmentation is a convenience when we want to send messages larger than the maximum transmission unit. To be
+bellow the maximum payload, it is possible to check the maximum user payload by using ``NetworkPeer.getMaxUserPayload()``.
+This call will return the maximum amount of bytes that can be sent in a message without fragmentation. It is
+lower than the MTU because it discounts the default RUDP header size.
+
+It is possible to increase the MTU by setting it via ``PeerConfig.setMtu(value)``. The default value
+is 508 which is a good value to avoid packet drops. Due to keeping the RUDP header size limited, the maximum size of a
+message that will be fragmented is 64kB (65536 bytes).
+
+Fragmentation should be used for setup scenarios or very low send ratio situations. It adds 6 extra bytes
+to the RUDP header for controlling the multiple fragments and the message may be delayed at the target end
+until all fragments arrive.
+
 # TODO
 
 - Add message coalescing;
-- Add fragmentation;
 - Review header space usage:
   - Sequence numbers doesn't use all 16 bits.
 - Add testbed to test delivery methods;
 - Peer and connection statistics (peer and connection):
   - Bytes sent/received;
   - Messages send/received.
-- Add remote time offset calculation.
+- Add remote time offset calculation;
+- Create server and client utility classes
+  - Allow to send the same message to multiple connections.

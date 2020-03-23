@@ -43,8 +43,8 @@ class UnreliableSenderChannel implements SenderChannel {
             byte[] buf = cachedMemory.allocBuffer(bufSize);
             int bufIdx = 0;
             buf[bufIdx++] = channelId;
-            buf[bufIdx++] = (byte)((seqNumber >> 8) & 0xFF);
-            buf[bufIdx++] = (byte)(seqNumber & 0xFF);
+            buf[bufIdx++] = (byte)((seqNumber << 1));
+            buf[bufIdx++] = (byte)(seqNumber >> 7);
 
             // Seq number doesn't care for pure unreliable delivery method. It is used by unreliable sequenced method.
             seqNumber = (short)((seqNumber + 1) % maxSeqNumbers);

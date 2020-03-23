@@ -30,7 +30,7 @@ class ReliableSequencedReceiverChannel extends ReliableReceiverChannel {
         if (Math.abs(relativeAckNumber) < windowSize) {
             acksToSend.add(seqNumber);
 //            Logger.debug("Dispatch message seq number: %d", seqNumber);
-            incomingMessagesQueue.enqueue(message);
+            dispatch(message);
             expectedSeqNumber = (short)((seqNumber + 1) % maxSeqNumber);
         }
         else {
@@ -39,5 +39,14 @@ class ReliableSequencedReceiverChannel extends ReliableReceiverChannel {
             acksToSend.add(seqNumber);
             cachedMemory.freeBuffer(message.getData());
         }
+    }
+
+    @Override
+    protected void dispatchFragment(IncomingMessage message) {
+        super.dispatchFragment(message);
+        // Discard any previous withhold messages because they are outdated and will never be completed.
+//        Logger.debug("Discarding %d withhold fragments.", withholdFragments.size());
+        withholdFragments.values().forEach(m -> cachedMemory.freeBuffer(m.getData()));
+        withholdFragments.clear();
     }
 }

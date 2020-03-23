@@ -9,9 +9,10 @@ class ReliableOrderedSenderChannel extends ReliableSenderChannel {
             CachedMemory cachedMemory,
             short windowSize,
             short maxSeqNumbers,
+            int mtu,
             LongSupplier resendDelayProvider,
             int channelId
     ) {
-        super(address, sender, cachedMemory, windowSize, maxSeqNumbers, resendDelayProvider, DeliveryMethod.RELIABLE_ORDERED, channelId);
+        super(address, sender, cachedMemory, windowSize, maxSeqNumbers, mtu, resendDelayProvider, DeliveryMethod.RELIABLE_ORDERED, channelId);
     }
 }

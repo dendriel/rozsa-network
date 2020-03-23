@@ -2,9 +2,11 @@ package com.rozsa.network;
 
 import com.rozsa.network.message.IncomingMessage;
 
+import java.security.InvalidParameterException;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.LongSupplier;
 
 class ReliableSenderChannel implements SenderChannel {
@@ -26,15 +28,19 @@ class ReliableSenderChannel implements SenderChannel {
     protected short windowEnd;
     protected short seqNumber;
 
+    private AtomicInteger lastFragmentationGroupId;
+    private final int mtu;
+
     ReliableSenderChannel(
             Address address,
             PacketSender sender,
             CachedMemory cachedMemory,
             short windowSize,
             short maxSeqNumbers,
+            int mtu,
             LongSupplier resendDelayProvider
     ) {
-        this(address, sender, cachedMemory, windowSize, maxSeqNumbers, resendDelayProvider, DeliveryMethod.RELIABLE, 0);
+        this(address, sender, cachedMemory, windowSize, maxSeqNumbers, mtu, resendDelayProvider, DeliveryMethod.RELIABLE, 0);
     }
 
     ReliableSenderChannel(
@@ -43,6 +49,7 @@ class ReliableSenderChannel implements SenderChannel {
             CachedMemory cachedMemory,
             short windowSize,
             short maxSeqNumbers,
+            int mtu,
             LongSupplier resendDelayProvider,
             DeliveryMethod type,
             int channelId
@@ -53,9 +60,11 @@ class ReliableSenderChannel implements SenderChannel {
         this.sender = sender;
         this.windowSize = windowSize;
         this.maxSeqNumbers = maxSeqNumbers;
+        this.mtu = mtu;
         this.resendDelayProvider = resendDelayProvider;
         this.cachedMemory = cachedMemory;
 
+        lastFragmentationGroupId = new AtomicInteger();
         outgoingMessages = new ConcurrentLinkedQueue<>();
         storedMessages = new StoredMessage[this.windowSize];
         incomingAcks = new LinkedList<>();
@@ -73,7 +82,37 @@ class ReliableSenderChannel implements SenderChannel {
     }
 
     public void enqueue(OutgoingMessage msg) {
-        outgoingMessages.add(msg);
+        int msgLen = msg.getLength();
+        int userPayload = mtu - NetConstants.MsgHeaderSize;
+        if (msgLen <= userPayload) {
+            outgoingMessages.add(msg);
+            return;
+        }
+
+        if (msgLen > NetConstants.MaxFragGroupLength) {
+            throw new InvalidParameterException(String.format("Maximum allowed message length is %d bytes.", NetConstants.MaxFragGroupLength));
+        }
+
+        int fragGroup = lastFragmentationGroupId.getAndIncrement();
+
+        byte[] dataToSend = msg.getData();
+        int dataToSendLength = msg.getLength();
+        int maxFragSize = mtu - NetConstants.MsgTotalFragHeaderSize;
+        int nextFragOffset = 0;
+        int remainingBytesToFrag = msgLen;
+        do {
+            int chunkLength = Math.min(remainingBytesToFrag, maxFragSize);
+            remainingBytesToFrag -= maxFragSize;
+            OutgoingMessage chunk = new OutgoingMessage(cachedMemory, chunkLength, fragGroup, nextFragOffset, dataToSendLength);
+//            Logger.error("Sent frag group %d - Offset: %d,  Len: %d, Remaining bytes: %d", fragGroup, nextFragOffset, chunkLength, remainingBytesToFrag);
+            System.arraycopy(dataToSend, nextFragOffset, chunk.getData(), 0, chunkLength);
+            chunk.incrementDataIdx(chunkLength);
+            nextFragOffset += chunkLength;
+
+            outgoingMessages.add(chunk);
+        } while (remainingBytesToFrag > 0);
+
+        cachedMemory.freeBuffer(msg.getData());
     }
 
     public void enqueueAck(IncomingMessage ack) {
@@ -144,12 +183,28 @@ class ReliableSenderChannel implements SenderChannel {
         while (!outgoingMessages.isEmpty() && Math.abs(1 + ((windowEnd < windowStart) ? (windowEnd + windowSize) : windowEnd) - windowStart) < windowSize) {
             OutgoingMessage msg = outgoingMessages.poll();
 
-            int bufSize = msg.getDataWritten() + NetConstants.MsgHeaderSize;
+            boolean isFrag = msg.isFrag();
+            int headerSize = isFrag ? NetConstants.MsgTotalFragHeaderSize : NetConstants.MsgHeaderSize;
+            int bufSize = msg.getDataWritten() + headerSize;
             byte[] buf = cachedMemory.allocBuffer(bufSize);
             int bufIdx = 0;
             buf[bufIdx++] = channelId;
-            buf[bufIdx++] = (byte)((seqNumber >> 8) & 0xFF);
-            buf[bufIdx++] = (byte)(seqNumber & 0xFF);
+            buf[bufIdx++] = (byte)(((seqNumber << 1) & 0xFF) | (isFrag ? 1 : 0));
+            buf[bufIdx++] = (byte)((seqNumber >> 7)& 0xFF);
+
+            if (isFrag) {
+                int fragGroup = msg.getFragGroup();
+                buf[bufIdx++] = (byte)((fragGroup >> 8) & 0xFF);
+                buf[bufIdx++] = (byte)(fragGroup & 0xFF);
+                int fragGroupLength = msg.getFragGroupLength();
+                buf[bufIdx++] = (byte)((fragGroupLength >> 8) & 0xFF);
+                buf[bufIdx++] = (byte)(fragGroupLength & 0xFF);
+                int fragOffset = msg.getFragOffset();
+                buf[bufIdx++] = (byte)((fragOffset >> 8) & 0xFF);
+                buf[bufIdx++] = (byte)(fragOffset & 0xFF);
+            }
+
+//            Logger.error("Send SEQ NUMBER %d", seqNumber);
 
             seqNumber = (short)((seqNumber + 1) % maxSeqNumbers);
 

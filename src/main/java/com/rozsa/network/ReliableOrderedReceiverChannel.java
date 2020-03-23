@@ -38,7 +38,7 @@ public class ReliableOrderedReceiverChannel extends ReliableReceiverChannel {
         }
 
         do {
-            incomingMessagesQueue.enqueue(message);
+            super.dispatch(message);
             expectedSeqNumber = (short)((expectedSeqNumber + 1) % maxSeqNumber);
             message = withholdMessages.remove(expectedSeqNumber);
         } while(message != null);

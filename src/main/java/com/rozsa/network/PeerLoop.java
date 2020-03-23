@@ -84,15 +84,15 @@ public class PeerLoop extends Thread implements PacketSender {
     }
 
     public void sendProtocol(Address addr, MessageType type, short seqNumber) {
-        byte[] data = cachedMemory.allocBuffer(NetConstants.MsgHeaderSize);
+        byte[] buf = cachedMemory.allocBuffer(NetConstants.MsgHeaderSize);
 
         int bufIdx = 0;
-        data[bufIdx++] = type.getId();
-        data[bufIdx++] = (byte)((seqNumber >> 8) & 0xFF);
-        data[bufIdx] = (byte)(seqNumber & 0xFF);
-        udpSocket.send(addr.getNetAddress(), addr.getPort(), data, NetConstants.MsgHeaderSize);
+        buf[bufIdx++] = type.getId();
+        buf[bufIdx++] = (byte)(seqNumber << 1);
+        buf[bufIdx] = (byte)(seqNumber >> 7);
+        udpSocket.send(addr.getNetAddress(), addr.getPort(), buf, NetConstants.MsgHeaderSize);
 
-        cachedMemory.freeBuffer(data);
+        cachedMemory.freeBuffer(buf);
     }
 
     private void expireHandshakes(Connection conn) {
@@ -144,8 +144,12 @@ public class PeerLoop extends Thread implements PacketSender {
 
         // deserialize header
         MessageType type = MessageType.from(buf[dataIdx++]);
-        int seqNumber = (buf[dataIdx++] & 0xFF) << 8;
-        seqNumber = seqNumber | (buf[dataIdx++] & 0xFF);
+
+        byte low = buf[dataIdx++];
+        byte high = buf[dataIdx++];
+
+        boolean isFrag = ((low & 0x1) == 1);
+        int seqNumber = ((((low & 0xFF) >> 1) & 0xFF) | ((high & 0xFF) << 7));
 
         // deserialize data
         int dataLen = length - dataIdx;
@@ -153,7 +157,7 @@ public class PeerLoop extends Thread implements PacketSender {
         System.arraycopy(buf, dataIdx, data, 0, dataLen);
 
         IncomingMessageHandler handler = messageHandlers.getOrDefault(type, userDataHandler);
-        handler.handle(addr, type, (short)seqNumber, data, dataLen);
+        handler.handle(addr, type, (short)seqNumber, data, dataLen, isFrag);
 
         return false;
     }

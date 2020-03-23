@@ -10,6 +10,7 @@ public class PeerConfig {
     private float connectionTimeout;
     private boolean isPingUpdatedEventEnabled;
     private int maxCachedBufferCount;
+    private int mtu;
 
     public PeerConfig() {
         this(0);
@@ -27,6 +28,7 @@ public class PeerConfig {
         receiveBufferSize = NetConstants.DefaultReceiveBufferSize;
 
         maxCachedBufferCount = NetConstants.DefaultMaxCachedBufferCount;
+        mtu = NetConstants.DefaultMTU;
     }
 
     public int getPort() {
@@ -91,5 +93,13 @@ public class PeerConfig {
 
     public void setMaxCachedBufferCount(int maxCachedBufferCount) {
         this.maxCachedBufferCount = maxCachedBufferCount;
+    }
+
+    public int getMtu() {
+        return mtu;
+    }
+
+    public void setMtu(int mtu) {
+        this.mtu = mtu;
     }
 }

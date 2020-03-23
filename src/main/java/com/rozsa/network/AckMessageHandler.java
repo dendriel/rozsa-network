@@ -13,7 +13,7 @@ class AckMessageHandler implements IncomingMessageHandler {
     }
 
     @Override
-    public void handle(Address addr, MessageType type, short seqNumber, byte[] data, int length) {
+    public void handle(Address addr, MessageType type, short seqNumber, byte[] data, int length, boolean isFrag) {
         Connection conn = connHolder.getConnection(addr.getId());
         if (conn == null) {
             cachedMemory.freeBuffer(data);
@@ -34,7 +34,7 @@ class AckMessageHandler implements IncomingMessageHandler {
                     return;
                 }
                 MessageType messageType = MessageType.from(data[0]);
-                IncomingMessage ackMsg = new IncomingMessage(IncomingMessageType.ACK, conn, seqNumber, data, length, messageType);
+                IncomingMessage ackMsg = new IncomingMessage(IncomingMessageType.ACK, conn, seqNumber, data, length, messageType, false);
                 conn.ackReceived(ackMsg, messageType);
                 break;
             case DISCONNECTED:

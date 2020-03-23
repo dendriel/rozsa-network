@@ -20,7 +20,7 @@ class UserDataHandler implements IncomingMessageHandler {
     }
 
     @Override
-    public void handle(Address addr, MessageType type, short seqNumber, byte[] data, int length) {
+    public void handle(Address addr, MessageType type, short seqNumber, byte[] data, int length, boolean isFrag) {
         Connection conn = connHolder.getHandshakeOrConnection(addr.getId());
         if (conn == null) {
             cachedMemory.freeBuffer(data);
@@ -36,7 +36,7 @@ class UserDataHandler implements IncomingMessageHandler {
                 connHolder.promoteConnection(conn);
                 incomingMessages.enqueue(new ConnectedMessage(conn));
             case CONNECTED:
-                IncomingUserDataMessage dataMessage = new IncomingUserDataMessage(conn, seqNumber, data, length, type);
+                IncomingUserDataMessage dataMessage = new IncomingUserDataMessage(conn, seqNumber, data, length, type, isFrag);
                 conn.enqueueIncomingMessage(dataMessage, DeliveryMethod.from(type.getBaseId()), type.getOffset());
                 break;
             case AWAITING_CONNECT_RESPONSE:

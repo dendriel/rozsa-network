@@ -39,6 +39,10 @@ public class Peer {
         isInitialized = true;
     }
 
+    public int getMaxUserPayload() {
+        return config.getMtu() - NetConstants.MsgHeaderSize;
+    }
+
     public int getIncomingMessagesCount() {
         return incomingMessages.size();
     }
@@ -87,9 +91,10 @@ public class Peer {
 
     public void sendMessage(Connection conn, OutgoingMessage msg, DeliveryMethod deliveryMethod, int channel) {
         if (channel >= NetConstants.MaxChannelsPerDeliveryMethod ||
+            (channel > 0 &&
             (!deliveryMethod.equals(UNRELIABLE_SEQUENCED) &&
             !deliveryMethod.equals(RELIABLE_SEQUENCED) &&
-            !deliveryMethod.equals(RELIABLE_ORDERED))) {
+            !deliveryMethod.equals(RELIABLE_ORDERED)))) {
             throw new InvalidParameterException(String.format("There are %d (0-%d) channels to be used with ordered and sequenced delivery methods. Invalid channel: %d",
                     NetConstants.MaxChannelsPerDeliveryMethod-1, NetConstants.MaxChannelsPerDeliveryMethod, channel));
         }

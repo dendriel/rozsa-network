@@ -15,17 +15,17 @@ public class Connection {
     private final CachedMemory cachedMemory;
     private final ConnectionHeartbeat heartbeat;
     private final long maximumHandshakeWaitingTime;
+    private final int mtu;
 
     private long lastHandshakeAttemptTime;
     private int totalHandshakesAttempts;
     private long connectRequestReceivedTime;
+
     private ConnectionState state;
     private DisconnectReason disconnectReason;
 
-    // TODO: testing purpose
     private ConcurrentHashMap<Byte, SenderChannel> senderChannels;
     private ConcurrentHashMap<Byte, ReceiverChannel> receiverChannels;
-
 
     Connection(PeerConfig config, Address address, PacketSender sender, IncomingMessagesQueue incomingMessages, CachedMemory cachedMemory) {
         this.config = config;
@@ -33,6 +33,8 @@ public class Connection {
         this.sender = sender;
         this.incomingMessages = incomingMessages;
         this.cachedMemory = cachedMemory;
+
+        mtu = config.getMtu();
 
         maximumHandshakeWaitingTime = config.getMaximumHandshakeAttempts() * config.getIntervalBetweenHandshakes();
         state = ConnectionState.DISCONNECTED;
@@ -94,11 +96,7 @@ public class Connection {
 
     boolean isAwaitingConnectionEstablishedExpired() {
         boolean isWaitingConnectionEstablishedExpired = Clock.getTimePassedSince(connectRequestReceivedTime) > maximumHandshakeWaitingTime;
-        if (state == AWAITING_CONNECT_ESTABLISHED && isWaitingConnectionEstablishedExpired) {
-            return true;
-        }
-
-        return false;
+        return state == AWAITING_CONNECT_ESTABLISHED && isWaitingConnectionEstablishedExpired;
     }
 
     void enqueueOutgoingMessage(OutgoingMessage msg, DeliveryMethod deliveryMethod, int channelId) {
@@ -118,7 +116,7 @@ public class Connection {
     }
 
     private SenderChannel createSenderChannel(DeliveryMethod deliveryMethod, int channelId) {
-        return SenderChannel.create(deliveryMethod, channelId, address, sender, cachedMemory, heartbeat::getResendDelay);
+        return SenderChannel.create(deliveryMethod, channelId, address, sender, cachedMemory, heartbeat::getResendDelay, mtu);
     }
 
     private ReceiverChannel getOrCreateReceiverChannel(DeliveryMethod deliveryMethod, int channelId) {

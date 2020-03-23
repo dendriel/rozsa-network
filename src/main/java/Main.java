@@ -7,6 +7,7 @@ import com.rozsa.network.message.PingUpdatedMessage;
 import java.io.NotActiveException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.Random;
 
 public class Main {
@@ -19,7 +20,8 @@ public class Main {
 
         PeerConfig config = new PeerConfig(targetPort);
         config.setPingUpdatedEventEnabled(true);
-        config.setPingInterval(0.25f);
+        config.setPingInterval(1f);
+        config.setMtu(50);
 
         peer = new NetworkPeer(config);
         peer.addOnConnectedEventListener(Main::onConnectedEvent);
@@ -52,8 +54,10 @@ public class Main {
     }
 
     static void sendReliable(Connection conn) {
-        int count = 3072;
+//        int count = 3072;
 //        int count = 2048;
+        int count = 96;
+//        int count = 1;
 
         try {
             Thread.sleep(1000);
@@ -64,11 +68,21 @@ public class Main {
         Random random = new Random();
 
         for (int i = 0;  i < count; i++) {
-            String msg = String.valueOf(i);
-            OutgoingMessage outgoingMsg = peer.createOutgoingMessage(msg.length());
-            outgoingMsg.writeString(msg);
+
+            // 1000
+//            String msg = "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789";
+//            msg = msg.concat(msg);
+
+            byte[] msg = new byte[100];
+            Arrays.fill(msg, (byte)i);
+
+//            String msg = String.valueOf(i);
+            OutgoingMessage outgoingMsg = peer.createOutgoingMessage(msg.length);
+//            outgoingMsg.writeString(msg);
+            outgoingMsg.writeBytes(msg);
 //            outgoingMsg.writeString(String.format(" - extra text!"));
-            peer.sendMessage(conn, outgoingMsg, DeliveryMethod.UNRELIABLE_SEQUENCED, random.nextInt(32));
+//            peer.sendMessage(conn, outgoingMsg, DeliveryMethod.RELIABLE_ORDERED, random.nextInt(32));
+            peer.sendMessage(conn, outgoingMsg, DeliveryMethod.RELIABLE_SEQUENCED, 0);
         }
 
     }
@@ -95,11 +109,12 @@ public class Main {
 
             byte[] buf = new byte[msg.getLength()];
             System.arraycopy(msg.getData(), 0, buf, 0, buf.length);
-            String val = new String(buf);
+//            String val = new String(buf[0]);
+            Logger.info("Received message \"" + buf[0] + "\" - total: " + messagesReceived + " " + msg.getDeliveryMethod() + " " + msg.getChannel());
 
-            if (Integer.parseInt(val) != expectedOrder) {
-                System.out.printf("Received out of order message: %s expected: %d\n", val, expectedOrder);
-            }
+//            if (Integer.parseInt(val) != expectedOrder) {
+//                System.out.printf("Received out of order message: %s expected: %d\n", val, expectedOrder);
+//            }
             expectedOrder++;
             messagesReceived++;
 
@@ -110,7 +125,7 @@ public class Main {
 //            expectedOrder = (short)((seqNumber + 1) % 1024);
 //            messagesReceived++;
 
-            Logger.info("Received message \"" + val + "\" - total: " + messagesReceived + " " + msg.getDeliveryMethod() + " " + msg.getChannel());
+//            Logger.info("Received message \"" + val + "\" - total: " + messagesReceived + " " + msg.getDeliveryMethod() + " " + msg.getChannel());
 
             peer.recycle(msg);
         }

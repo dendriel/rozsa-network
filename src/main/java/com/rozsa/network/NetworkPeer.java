@@ -70,6 +70,10 @@ public class NetworkPeer {
         peer.sendMessage(conn, msg, deliveryMethod, channel);
     }
 
+    public int getMaxUserPayload() {
+        return peer.getMaxUserPayload();
+    }
+
     public OutgoingMessage createOutgoingMessage(int length) {
         return peer.createOutgoingMessage(length);
     }

@@ -18,7 +18,7 @@ class ConnectionEstablishedHandler implements IncomingMessageHandler {
     }
 
     @Override
-    public void handle(Address addr, MessageType type, short seqNumber, byte[] data, int length) {
+    public void handle(Address addr, MessageType type, short seqNumber, byte[] data, int length, boolean isFrag) {
         Connection conn = connHolder.getHandshakeOrConnection(addr.getId());
         if (conn == null) {
             conn = connHolder.createAsIncomingHandshake(addr);

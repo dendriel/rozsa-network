@@ -8,7 +8,7 @@ class UnknownMessageHandler implements IncomingMessageHandler {
     }
 
     @Override
-    public void handle(Address addr, MessageType type, short seqNumber, byte[] data, int length) {
+    public void handle(Address addr, MessageType type, short seqNumber, byte[] data, int length, boolean isFrag) {
         cachedMemory.freeBuffer(data);
         Logger.error("Unknown message received from %s", addr);
     }

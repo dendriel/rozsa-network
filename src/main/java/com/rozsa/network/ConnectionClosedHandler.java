@@ -10,7 +10,7 @@ class ConnectionClosedHandler implements IncomingMessageHandler {
     }
 
     @Override
-    public void handle(Address addr, MessageType type, short seqNumber, byte[] data, int length) {
+    public void handle(Address addr, MessageType type, short seqNumber, byte[] data, int length, boolean isFrag) {
         Connection conn = connHolder.getConnection(addr.getId());
         if (conn == null) {
             Logger.warn("Received closed message from unconnected source %s.", addr);
