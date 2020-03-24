@@ -11,6 +11,7 @@ public class PeerConfig {
     private boolean isPingUpdatedEventEnabled;
     private int maxCachedBufferCount;
     private int mtu;
+    private boolean connectionApprovalRequired;
 
     public PeerConfig() {
         this(0);
@@ -29,6 +30,8 @@ public class PeerConfig {
 
         maxCachedBufferCount = NetConstants.DefaultMaxCachedBufferCount;
         mtu = NetConstants.DefaultMTU;
+
+        connectionApprovalRequired = NetConstants.DefaultConnectionApprovalRequired;
     }
 
     public int getPort() {
@@ -101,5 +104,13 @@ public class PeerConfig {
 
     public void setMtu(int mtu) {
         this.mtu = mtu;
+    }
+
+    public boolean isConnectionApprovalRequired() {
+        return connectionApprovalRequired;
+    }
+
+    public void setConnectionApprovalRequired(boolean connectionApprovalRequired) {
+        this.connectionApprovalRequired = connectionApprovalRequired;
     }
 }

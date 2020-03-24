@@ -23,6 +23,9 @@ class ConnectionClosedHandler implements IncomingMessageHandler {
             case AWAITING_CONNECT_RESPONSE:
             case AWAITING_CONNECT_ESTABLISHED:
             case SEND_CONNECT_REQUEST:
+            case AWAITING_APPROVAL:
+            case CONNECTION_APPROVED:
+            case CONNECTION_DENIED:
                 Logger.warn("Received closed message from %s while not being connected.", addr);
                 break;
             case CONNECTED:

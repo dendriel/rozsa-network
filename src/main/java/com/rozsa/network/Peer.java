@@ -62,13 +62,21 @@ public class Peer {
     public Connection connect(String ip, int port) throws NotActiveException, UnknownHostException {
         assertInitialized();
 
+        return connect(ip, port, null);
+    }
+
+    public Connection connect(String ip, int port, OutgoingMessage hailMessage) throws NotActiveException, UnknownHostException {
+        assertInitialized();
+
         Address addr =  Address.from(ip, port);
         Connection conn = connHolder.getConnection(addr.getId());
-        if (conn != null) {
-            if (conn.getState() == CONNECTED) {
-                Logger.debug("Already connected to %s:%d", ip, port);
-                return conn;
+        if (conn != null && (conn.isConnected() || conn.isConnecting())) {
+            if (hailMessage != null) {
+                cachedMemory.freeBuffer(hailMessage.getData());
             }
+            Logger.debug("Already connected or connecting to %s:%d", ip, port);
+            return conn;
+        } else if (conn != null) {
             // remove conn so we can start fresh from handshake.
             connHolder.removeConnection(conn);
         }
@@ -77,11 +85,20 @@ public class Peer {
 
         conn = connHolder.getHandshake(addr.getId());
         if (conn == null) {
-            return connHolder.createAsOutgoingHandshake(addr);
+            return connHolder.createAsOutgoingHandshake(addr, hailMessage);
         }
 
+        // resend connect request (but won't update hail message).
         conn.sendConnectRequest();
         return conn;
+    }
+
+    public void approve(Connection connection) {
+        connection.setConnectionApproved();
+    }
+
+    public void deny(Connection connection, DisconnectReason reason) {
+        connection.setConnectionDenied(reason);
     }
 
     public void disconnect(Connection conn) {

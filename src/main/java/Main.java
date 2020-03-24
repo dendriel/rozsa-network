@@ -1,8 +1,5 @@
 import com.rozsa.network.*;
-import com.rozsa.network.message.ConnectedMessage;
-import com.rozsa.network.message.DisconnectedMessage;
-import com.rozsa.network.message.IncomingUserDataMessage;
-import com.rozsa.network.message.PingUpdatedMessage;
+import com.rozsa.network.message.*;
 
 import java.io.NotActiveException;
 import java.net.SocketException;
@@ -22,15 +19,20 @@ public class Main {
         config.setPingUpdatedEventEnabled(true);
         config.setPingInterval(1f);
         config.setMtu(50);
+        config.setConnectionApprovalRequired(true);
 
         peer = new NetworkPeer(config);
+        peer.addOnConnectionRequestEventListeners(Main::onConnectionRequest);
         peer.addOnConnectedEventListener(Main::onConnectedEvent);
         peer.addOnDisconnectedEventListener(Main::onDisconnectedEvent);
         peer.addOnPingUpdatedEventListener(Main::onPingUpdatedEvent);
         peer.initialize();
 
         if (!isServer) {
-            peer.connect("localhost", serverPort);
+            String password = "Vitor Rozsa Password";
+            OutgoingMessage msg = peer.createOutgoingMessage(password.length());
+            msg.writeString(password);
+            peer.connect("localhost", serverPort, msg);
         }
 
         loop();
@@ -38,6 +40,21 @@ public class Main {
 
     static boolean isServer;
     static NetworkPeer peer;
+
+    static boolean deny = true;
+
+    static void onConnectionRequest(ConnectionRequestMessage msg) {
+        System.out.println("Received a connection request! Data: " + new String(msg.getHailMessage().getData()));
+
+        if (!deny) {
+            peer.approve(msg.getConnection());
+            deny = !deny;
+        }
+        else {
+            peer.deny(msg.getConnection());
+            deny = !deny;
+        }
+    }
 
     static void onPingUpdatedEvent(PingUpdatedMessage msg) {
         System.out.println("> Ping updated to " + msg.getPingMicros() + "us");

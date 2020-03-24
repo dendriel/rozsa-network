@@ -29,7 +29,7 @@ public class PeerLoop extends Thread implements PacketSender {
         this.incomingMessages = incomingMessages;
         this.cachedMemory = cachedMemory;
         isRunning = true;
-        initializeHandlers();
+        initializeHandlers(config.isConnectionApprovalRequired());
 
         userDataHandler = new UserDataHandler(connHolder, cachedMemory, incomingMessages);
         this.recvMessagesThreshold = recvMessagesThreshold;
@@ -37,13 +37,13 @@ public class PeerLoop extends Thread implements PacketSender {
         udpSocket = new UDPSocket(config.getPort(), 1, config.getReceiveBufferSize());
     }
 
-    private void initializeHandlers() {
+    private void initializeHandlers(boolean isApprovalRequired) {
         messageHandlers = new EnumMap<>(MessageType.class);
         messageHandlers.put(MessageType.UNKNOWN, new UnknownMessageHandler(cachedMemory));
-        messageHandlers.put(MessageType.CONNECTION_REQUEST, new ConnectionRequestHandler(connHolder, cachedMemory, incomingMessages, this));
+        messageHandlers.put(MessageType.CONNECTION_REQUEST, new ConnectionRequestHandler(connHolder, cachedMemory, incomingMessages, this, isApprovalRequired));
         messageHandlers.put(MessageType.CONNECTION_RESPONSE, new ConnectionResponseHandler(connHolder, cachedMemory, incomingMessages, this));
         messageHandlers.put(MessageType.CONNECTION_ESTABLISHED, new ConnectionEstablishedHandler(connHolder, cachedMemory, incomingMessages));
-        messageHandlers.put(MessageType.CONNECTION_DENIED, new ConnectionDeniedHandler(cachedMemory));
+        messageHandlers.put(MessageType.CONNECTION_DENIED, new ConnectionDeniedHandler(connHolder, cachedMemory, incomingMessages));
         messageHandlers.put(MessageType.CONNECTION_CLOSED, new ConnectionClosedHandler(connHolder, cachedMemory));
         messageHandlers.put(MessageType.PING, new PingMessageHandler(connHolder, cachedMemory));
         messageHandlers.put(MessageType.PONG, new PongMessageHandler(connHolder, cachedMemory));
@@ -95,6 +95,22 @@ public class PeerLoop extends Thread implements PacketSender {
         cachedMemory.freeBuffer(buf);
     }
 
+    /**
+     * Useful when we want to send data alongside a protocol message (like a hail message in a connection request).
+     */
+    public void encodeSendProtocol(Address addr, MessageType type, short seqNumber, byte[] data, int dataLen) {
+        int bufSize = dataLen + NetConstants.MsgHeaderSize;
+        byte[] buf = cachedMemory.allocBuffer(bufSize);
+        int bufIdx = 0;
+        buf[bufIdx++] = type.getId();
+        buf[bufIdx++] = (byte)((seqNumber << 1));
+        buf[bufIdx++] = (byte)(seqNumber >> 7);
+
+        System.arraycopy(data, 0, buf, bufIdx, dataLen);
+
+        send(addr, buf, bufSize, true);
+    }
+
     private void expireHandshakes(Connection conn) {
         if (conn.isHandshakeExpired()) {
             connHolder.removeHandshake(conn);
@@ -104,6 +120,11 @@ public class PeerLoop extends Thread implements PacketSender {
 
         if (conn.isAwaitingConnectionEstablishedExpired()) {
             // may concur with user thread trying to connect to this address. [?!]
+            connHolder.removeHandshake(conn);
+        }
+
+        if (conn.isDisconnected()) {
+            // incoming connection was refused by this peer.
             connHolder.removeHandshake(conn);
         }
     }
@@ -155,6 +176,8 @@ public class PeerLoop extends Thread implements PacketSender {
         int dataLen = length - dataIdx;
         byte[] data = cachedMemory.allocBuffer(dataLen);
         System.arraycopy(buf, dataIdx, data, 0, dataLen);
+
+        Logger.error("RECV %s", type);
 
         IncomingMessageHandler handler = messageHandlers.getOrDefault(type, userDataHandler);
         handler.handle(addr, type, (short)seqNumber, data, dataLen, isFrag);

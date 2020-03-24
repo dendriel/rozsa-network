@@ -71,6 +71,15 @@ public final class OutgoingMessage {
         writeBytes(valueAsBytes);
     }
 
+    public void writeByte(byte value) {
+        int overflowLength = dataIdx + 1 - data.length;
+        if (overflowLength > 0) {
+            reallocateData(overflowLength);
+            Logger.debug("Reallocated buffer in %d bytes. Total buffer size: %d", overflowLength, data.length);
+        }
+        data[dataIdx++] = value;
+    }
+
     public void writeBytes(byte[] value) {
         writeBytes(value, value.length);
     }

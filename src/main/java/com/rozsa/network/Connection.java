@@ -17,6 +17,8 @@ public class Connection {
     private final long maximumHandshakeWaitingTime;
     private final int mtu;
 
+    private OutgoingMessage hailMessage;
+
     private long lastHandshakeAttemptTime;
     private int totalHandshakesAttempts;
     private long connectRequestReceivedTime;
@@ -66,8 +68,26 @@ public class Connection {
         this.state = state;
     }
 
+    void setHailMessage(OutgoingMessage hailMessage) {
+        this.hailMessage = hailMessage;
+    }
+
     public ConnectionState getState() {
         return state;
+    }
+
+    public boolean isConnecting() {
+        return state == SEND_CONNECT_REQUEST ||
+                state == AWAITING_CONNECT_RESPONSE ||
+                state == AWAITING_CONNECT_ESTABLISHED;
+    }
+
+    public boolean isConnected() {
+        return state == CONNECTED;
+    }
+
+    public boolean isDisconnected() {
+        return state == DISCONNECTED;
     }
 
     DisconnectReason getDisconnectReason() {
@@ -87,6 +107,25 @@ public class Connection {
         setState(SEND_CONNECT_REQUEST);
         lastHandshakeAttemptTime = Clock.getCurrentTime();
         totalHandshakesAttempts = 0;
+    }
+
+    void setAwaitingApproval() {
+        setState(AWAITING_APPROVAL);
+        // won't setup a timeout because this action depends on the host.
+    }
+
+    void setConnectionApproved() {
+        setState(CONNECTION_APPROVED);
+    }
+
+    void setConnectionDenied(DisconnectReason reason) {
+        disconnectReason = reason;
+        setState(CONNECTION_DENIED);
+    }
+
+    void setDisconnected(DisconnectReason reason) {
+        disconnectReason = reason;
+        setState(DISCONNECTED);
     }
 
     boolean isHandshakeExpired() {
@@ -162,6 +201,16 @@ public class Connection {
             case AWAITING_CONNECT_ESTABLISHED:
             // peer loop handles awaiting connect established timeouts.
                 break;
+            case CONNECTION_APPROVED:
+                setAwaitingConnectEstablished();
+                sender.sendProtocol(getAddress(), MessageType.CONNECTION_RESPONSE, (short)0);
+                break;
+            case CONNECTION_DENIED:
+                setState(DISCONNECTED);
+                OutgoingMessage msg = new OutgoingMessage(cachedMemory, 1);
+                msg.writeByte(disconnectReason.getId());
+                sender.encodeSendProtocol(getAddress(), MessageType.CONNECTION_DENIED, (short)0, msg.getData(), msg.getDataWritten());
+                break;
             // should not be in any of the states bellow if it is a handshake.
             case DISCONNECTED:
             case CONNECTED:
@@ -175,7 +224,12 @@ public class Connection {
             return;
         }
 
-        sender.sendProtocol(address, MessageType.CONNECTION_REQUEST, (short)0);
+        if (hailMessage != null) {
+            sender.encodeSendProtocol(address, MessageType.CONNECTION_REQUEST, (short)0, hailMessage.getData(), hailMessage.getDataWritten());
+        }
+        else {
+            sender.sendProtocol(address, MessageType.CONNECTION_REQUEST, (short)0);
+        }
 
         state = AWAITING_CONNECT_RESPONSE;
 

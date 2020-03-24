@@ -41,4 +41,6 @@ public class NetConstants {
 
     static final int DefaultMaxCachedBufferCount = 512;
     static final int DefaultMTU = 508;
+
+    static final boolean DefaultConnectionApprovalRequired = false;
 }

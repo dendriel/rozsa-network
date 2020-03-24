@@ -1,5 +1,7 @@
 package com.rozsa.network;
 
+import com.rozsa.network.message.IncomingMessage;
+
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -29,7 +31,7 @@ class ConnectionHolder {
     }
 
     Connection getHandshake(long id) {
-        return connections.get(id);
+        return handshakes.get(id);
     }
 
     Connection getHandshakeOrConnection(long id) {
@@ -49,16 +51,17 @@ class ConnectionHolder {
     }
 
     Connection createAsIncomingHandshake(Address addr) {
-        return createAsHandshake(addr, ConnectionState.DISCONNECTED);
+        return createAsHandshake(addr, ConnectionState.DISCONNECTED, null);
     }
 
-    Connection createAsOutgoingHandshake(Address addr) {
-        return createAsHandshake(addr, ConnectionState.SEND_CONNECT_REQUEST);
+    Connection createAsOutgoingHandshake(Address addr, OutgoingMessage hailMessage) {
+        return createAsHandshake(addr, ConnectionState.SEND_CONNECT_REQUEST, hailMessage);
     }
 
-    private Connection createAsHandshake(Address addr, ConnectionState state) {
+    private Connection createAsHandshake(Address addr, ConnectionState state, OutgoingMessage hailMessage) {
         Connection handshake = new Connection(config, addr, sender, incomingMessages, cachedMemory);
         handshake.setState(state);
+        handshake.setHailMessage(hailMessage);
         handshakes.put(addr.getId(), handshake);
         return handshake;
     }

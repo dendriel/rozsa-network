@@ -1,6 +1,8 @@
 package com.rozsa.network;
 
 import com.rozsa.network.message.ConnectedMessage;
+import com.rozsa.network.message.ConnectionRequestMessage;
+import com.rozsa.network.message.IncomingUserDataMessage;
 
 import java.util.Arrays;
 
@@ -9,17 +11,20 @@ class ConnectionRequestHandler implements IncomingMessageHandler {
     private final  CachedMemory cachedMemory;
     private final IncomingMessagesQueue incomingMessages;
     private final PacketSender packetSender;
+    private final boolean isApprovalRequired;
 
     ConnectionRequestHandler(
             ConnectionHolder connHolder,
             CachedMemory cachedMemory,
             IncomingMessagesQueue incomingMessages,
-            PacketSender packetSender
+            PacketSender packetSender,
+            boolean isApprovalRequired
     ) {
         this.connHolder = connHolder;
         this.cachedMemory = cachedMemory;
         this.incomingMessages = incomingMessages;
         this.packetSender = packetSender;
+        this.isApprovalRequired = isApprovalRequired;
     }
 
     @Override
@@ -29,15 +34,21 @@ class ConnectionRequestHandler implements IncomingMessageHandler {
             conn = connHolder.createAsIncomingHandshake(addr);
         }
 
-        cachedMemory.freeBuffer(data);
-
         switch (conn.getState()) {
+            case AWAITING_APPROVAL:
             case DISCONNECTED:
-                // if disconnected, send connect response and await for connect established.
-                conn.setAwaitingConnectEstablished();
-                packetSender.sendProtocol(conn.getAddress(), MessageType.CONNECTION_RESPONSE, (short)0);
+                if (!isApprovalRequired) {
+                    // if disconnected, send connect response and await for connect established.
+                    conn.setAwaitingConnectEstablished();
+                    packetSender.sendProtocol(conn.getAddress(), MessageType.CONNECTION_RESPONSE, (short)0);
+                    cachedMemory.freeBuffer(data);
+                }
+                else {
+                    conn.setAwaitingApproval();
+                    IncomingUserDataMessage hailMessage = new IncomingUserDataMessage(conn, seqNumber, data, length, type, isFrag);
+                    incomingMessages.enqueue(new ConnectionRequestMessage(conn, hailMessage));
+                }
                 break;
-
             case SEND_CONNECT_REQUEST:
             case AWAITING_CONNECT_RESPONSE:
             case AWAITING_CONNECT_ESTABLISHED:
@@ -45,13 +56,16 @@ class ConnectionRequestHandler implements IncomingMessageHandler {
                 incomingMessages.enqueue(new ConnectedMessage(conn));
                 connHolder.promoteConnection(conn);
                 packetSender.sendProtocol(conn.getAddress(), MessageType.CONNECTION_ESTABLISHED, (short)0);
+                cachedMemory.freeBuffer(data);
                 break;
 
             case CONNECTED:
                 // already connected to peer. Resend connect response.
                 packetSender.sendProtocol(conn.getAddress(), MessageType.CONNECTION_RESPONSE, (short)0);
+                cachedMemory.freeBuffer(data);
                 break;
             default:
+                cachedMemory.freeBuffer(data);
                 break;
         }
     }

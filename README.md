@@ -4,6 +4,7 @@ Simple Reliable UDP (RUDP) com.rozsa.network library in Java made by me =].
 # Features
 
 - Three-way handshake (connection request, response and established);
+- Connection approval (host may approve or deny an incoming connection);
 - Connection Heartbeat (provides latency value);
 - Latency monitoring (uses weighted average to calculate latency);
 - Latency update event (value in micros and millis);
@@ -74,6 +75,10 @@ message that will be fragmented is 64kB (65536 bytes).
 Fragmentation should be used for setup scenarios or very low send ratio situations. It adds 6 extra bytes
 to the RUDP header for controlling the multiple fragments and the message may be delayed at the target end
 until all fragments arrive.
+
+# Connection Approval
+
+TODO
 
 # TODO
 

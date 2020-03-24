@@ -35,9 +35,12 @@ class ConnectionEstablishedHandler implements IncomingMessageHandler {
                 incomingMessages.enqueue(new ConnectedMessage(conn));
                 break;
             case CONNECTED:
+            case CONNECTION_APPROVED:
                 Logger.debug("Already connected to %s.", conn);
                 break;
             case DISCONNECTED:
+            case AWAITING_APPROVAL:
+            case CONNECTION_DENIED:
                 Logger.debug("Didn't approved connection with %s.", conn);
             default:
                 break;

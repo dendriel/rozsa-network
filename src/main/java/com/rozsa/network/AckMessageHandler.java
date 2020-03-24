@@ -25,6 +25,9 @@ class AckMessageHandler implements IncomingMessageHandler {
             case AWAITING_CONNECT_RESPONSE:
             case AWAITING_CONNECT_ESTABLISHED:
             case SEND_CONNECT_REQUEST:
+            case AWAITING_APPROVAL:
+            case CONNECTION_APPROVED:
+            case CONNECTION_DENIED:
                 cachedMemory.freeBuffer(data);
                 Logger.warn("Received ack while in an invalid state. Source %s.", addr);
                 break;

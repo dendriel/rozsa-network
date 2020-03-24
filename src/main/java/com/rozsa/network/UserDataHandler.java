@@ -2,7 +2,6 @@ package com.rozsa.network;
 
 import com.rozsa.network.message.ConnectedMessage;
 import com.rozsa.network.message.IncomingUserDataMessage;
-import sun.plugin2.message.Message;
 
 class UserDataHandler implements IncomingMessageHandler {
     private final ConnectionHolder connHolder;
@@ -29,6 +28,7 @@ class UserDataHandler implements IncomingMessageHandler {
         }
 
         switch (conn.getState()) {
+            case CONNECTION_APPROVED:
             case AWAITING_CONNECT_ESTABLISHED:
                 // received user data while waiting for connect established. Connect established message must got lost in
                 // its way. Consider this user data as a sign of connection established.
@@ -42,6 +42,8 @@ class UserDataHandler implements IncomingMessageHandler {
             case AWAITING_CONNECT_RESPONSE:
             case SEND_CONNECT_REQUEST:
             case DISCONNECTED:
+            case AWAITING_APPROVAL:
+            case CONNECTION_DENIED:
                 Logger.warn("Received user data from %s but isn't connected yet.", conn);
             default:
                 cachedMemory.freeBuffer(data);

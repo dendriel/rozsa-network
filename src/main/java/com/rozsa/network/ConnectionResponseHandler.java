@@ -32,6 +32,7 @@ class ConnectionResponseHandler implements IncomingMessageHandler {
         switch (conn.getState()) {
             case SEND_CONNECT_REQUEST:
             case AWAITING_CONNECT_RESPONSE:
+            case CONNECTION_APPROVED:
                 conn.setConnected();
                 connHolder.promoteConnection(conn);
                 incomingMessages.enqueue(new ConnectedMessage(conn));
@@ -42,6 +43,8 @@ class ConnectionResponseHandler implements IncomingMessageHandler {
                 packetSender.sendProtocol(conn.getAddress(), MessageType.CONNECTION_ESTABLISHED, (short)0);
                 break;
             case DISCONNECTED:
+            case AWAITING_APPROVAL:
+            case CONNECTION_DENIED:
             default:
                 break;
         }
