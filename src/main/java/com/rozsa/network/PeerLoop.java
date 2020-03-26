@@ -177,8 +177,6 @@ public class PeerLoop extends Thread implements PacketSender {
         byte[] data = cachedMemory.allocBuffer(dataLen);
         System.arraycopy(buf, dataIdx, data, 0, dataLen);
 
-        Logger.error("RECV %s", type);
-
         IncomingMessageHandler handler = messageHandlers.getOrDefault(type, userDataHandler);
         handler.handle(addr, type, (short)seqNumber, data, dataLen, isFrag);
 

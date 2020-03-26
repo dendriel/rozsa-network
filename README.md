@@ -29,12 +29,13 @@ Simple Reliable UDP (RUDP) com.rozsa.network library in Java made by me =].
 
 # Protocol Header
 
-4 bytes size:
+3 bytes size when unfragmented; 9 bytes size when fragmented:
 
 ```
 8 bits - message type
 15 bits - sequence number
 1 bit - is fragment?
+-- fragmentation part
 16 bits - fragment group;
 16 bits - fragment total length;
 16 bits - fragment offset.
