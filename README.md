@@ -1,5 +1,5 @@
 # Rozsa Network
-Simple Reliable UDP (RUDP) com.rozsa.network library in Java made by me =].
+Reliable UDP (RUDP) com.rozsa.network library in Java made by me =].
 
 # Features
 
@@ -104,11 +104,15 @@ System.out.println(msg.readString()); // prints "Rozsa Network"
 
 Handled types right now:
 
-- Byte;
-- Byte array;
-- String;
-- Int;
-- TODO: short; long; float; boolean;
+- byte;
+- byte[];
+- int;
+- short;
+- long;
+- float;
+- boolean;
+- BitSet;
+- String.
 
 Writing types directly into the message easies testing and may be fit for some type of messages (like authentication message). However, some writeable types adds some payload overhead. For example, the byte array and string writing adds two extra bytes used to track their lengths in reading operations. 
 

@@ -31,7 +31,7 @@ public class PeerLoop extends Thread implements PacketSender {
         isRunning = true;
         initializeHandlers(config.isConnectionApprovalRequired());
 
-        userDataHandler = new UserDataHandler(connHolder, cachedMemory, incomingMessages);
+        userDataHandler = new UserDataHandler(connHolder, cachedMemory, incomingMessages, this);
         this.recvMessagesThreshold = recvMessagesThreshold;
 
         udpSocket = new UDPSocket(config.getPort(), 1, config.getReceiveBufferSize());

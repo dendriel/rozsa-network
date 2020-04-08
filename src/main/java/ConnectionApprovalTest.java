@@ -7,6 +7,8 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Random;
 
+
+// Testing purpose only. The code is messy, I know.
 public class ConnectionApprovalTest {
     public static void ConnectionApprovalTest(String[] args) throws SocketException, NotActiveException, UnknownHostException, InterruptedException {
         int serverPort = 9090;

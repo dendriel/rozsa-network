@@ -7,15 +7,18 @@ class UserDataHandler implements IncomingMessageHandler {
     private final ConnectionHolder connHolder;
     private final CachedMemory cachedMemory;
     private final IncomingMessagesQueue incomingMessages;
+    private final PacketSender packetSender;
 
     UserDataHandler(
             ConnectionHolder connHolder,
             CachedMemory cachedMemory,
-            IncomingMessagesQueue incomingMessages
+            IncomingMessagesQueue incomingMessages,
+            PacketSender packetSender
     ) {
         this.connHolder = connHolder;
         this.cachedMemory = cachedMemory;
         this.incomingMessages = incomingMessages;
+        this.packetSender = packetSender;
     }
 
     @Override
@@ -23,7 +26,9 @@ class UserDataHandler implements IncomingMessageHandler {
         Connection conn = connHolder.getHandshakeOrConnection(addr.getId());
         if (conn == null) {
             cachedMemory.freeBuffer(data);
-            Logger.warn("Received user data from %s but handshake nor connection doesn't even exist!.", addr);
+            Logger.warn("Received user data from %s but handshake nor connection doesn't even exist! Sending close.", addr);;
+            // Maybe peer is hanging (not timeouted yer) from previous connection.
+            packetSender.sendProtocol(addr, MessageType.CONNECTION_CLOSED, (short)0);
             return;
         }
 
