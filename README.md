@@ -15,7 +15,8 @@ Simple Reliable UDP (RUDP) com.rozsa.network library in Java made by me =].
 - Data fragmentation for reliable delivery methods;
 - 32 channels for each reliable and sequenced delivery method;
 - Flow control for reliable delivery methods (uses a sliding window);
-- Data buffer recycling.
+- Data buffer recycling;
+- Types serialization/deserialization.
 
 # Delivery Methods
 
@@ -80,6 +81,36 @@ until all fragments arrive.
 # Connection Approval
 
 TODO
+
+# Types Serialization and Deserialization
+To send a message, one can get the data buffer (byte[]) and write/read directly into/from it. Another approach
+of serializing data is to use some facilities to write types directly into the message.
+
+For example:
+```Java
+// Send (write)
+OutgoingMessage outgoingMsg = peer.createOutgoingMessage(10);
+outgoingMsg.writeByte((byte)101);
+outgoingMsg.writeInt(900000);
+outgoingMsg.writeString("Rozsa Network");
+peer.sendMessage(conn, outgoingMsg, DeliveryMethod.RELIABLE_SEQUENCED);
+
+// Receive (read)
+IncomingUserDataMessage msg = peer.read();
+System.out.println(msg.readByte());   // prints "101"
+System.out.println(msg.readInt());    // prints "900000"
+System.out.println(msg.readString()); // prints "Rozsa Network"
+```
+
+Handled types right now:
+
+- Byte;
+- Byte array;
+- String;
+- Int;
+- TODO: short; long; float; boolean;
+
+Writing types directly into the message easies testing and may be fit for some type of messages (like authentication message). However, some writeable types adds some payload overhead. For example, the byte array and string writing adds two extra bytes used to track their lengths in reading operations. 
 
 # TODO
 

@@ -9,7 +9,7 @@ import java.util.Objects;
 
 public class IncomingMessage {
     private final IncomingMessageType type;
-    private final byte[] data;
+    protected final byte[] data;
     private final int length;
     private final short seqNumber;
     private final MessageType messageType;

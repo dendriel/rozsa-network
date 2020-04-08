@@ -62,21 +62,26 @@ public final class OutgoingMessage {
         System.arraycopy(data, 0, newBuf, 0, dataLength);
         cachedMemory.freeBuffer(data);
         data = newBuf;
+        dataLength = newLength;
     }
 
-    // TODO: add serialization methods. writeInt; writeString etc
+    public void writeInt(int value) {
+        int totalLength = 4;
+        reallocateDataIfOverflow(totalLength);
+
+        data[dataIdx++] = (byte)((value >> 24) & 0xFF);
+        data[dataIdx++] = (byte)((value >> 16) & 0xFF);
+        data[dataIdx++] = (byte)((value >> 8) & 0xFF);
+        data[dataIdx++] = (byte)(value & 0xFF);
+    }
 
     public void writeString(String value) {
         byte[] valueAsBytes = value.getBytes();
-        writeBytes(valueAsBytes);
+        writeBytes(valueAsBytes, valueAsBytes.length);
     }
 
     public void writeByte(byte value) {
-        int overflowLength = dataIdx + 1 - data.length;
-        if (overflowLength > 0) {
-            reallocateData(overflowLength);
-            Logger.debug("Reallocated buffer in %d bytes. Total buffer size: %d", overflowLength, data.length);
-        }
+        reallocateDataIfOverflow(1);
         data[dataIdx++] = value;
     }
 
@@ -85,11 +90,11 @@ public final class OutgoingMessage {
     }
 
     public void writeBytes(byte[] value, int length) {
-        int overflowLength = dataIdx + length - data.length;
-        if (overflowLength > 0) {
-            reallocateData(overflowLength);
-            Logger.debug("Reallocated buffer in %d bytes. Total buffer size: %d", overflowLength, data.length);
-        }
+        int totalLength = length + 2;
+        reallocateDataIfOverflow(totalLength);
+
+        data[dataIdx++] = (byte)(length & 0xFF);
+        data[dataIdx++] = (byte)((length >> 8) & 0xFF);
 
         System.arraycopy(value, 0, data, dataIdx, length);
         dataIdx += length;
@@ -99,4 +104,11 @@ public final class OutgoingMessage {
         dataIdx += value;
     }
 
+    private void reallocateDataIfOverflow(int length) {
+        int overflowLength = dataIdx + length - data.length;
+        if (overflowLength > 0) {
+            reallocateData(overflowLength);
+            Logger.debug("Reallocated buffer in %d bytes. Total buffer size: %d", overflowLength, data.length);
+        }
+    }
 }
