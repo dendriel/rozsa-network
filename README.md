@@ -118,6 +118,7 @@ Writing types directly into the message easies testing and may be fit for some t
 
 # TODO
 
+- Send Internal method to help testing;
 - Add message coalescing;
 - Review header space usage:
   - Sequence numbers doesn't use all 16 bits.

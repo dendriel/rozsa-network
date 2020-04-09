@@ -35,14 +35,14 @@ public enum DisconnectReason {
     /**
      * Custom user disconnection reasons.
      */
-    CUSTOM_USER_01(6),
-    CUSTOM_USER_02(7),
-    CUSTOM_USER_03(8),
-    CUSTOM_USER_04(9),
-    CUSTOM_USER_05(10),
-    CUSTOM_USER_06(11),
-    CUSTOM_USER_07(12),
-    CUSTOM_USER_08(13),
+    CUSTOM_USER_01(101),
+    CUSTOM_USER_02(102),
+    CUSTOM_USER_03(103),
+    CUSTOM_USER_04(104),
+    CUSTOM_USER_05(105),
+    CUSTOM_USER_06(106),
+    CUSTOM_USER_07(107),
+    CUSTOM_USER_08(108),
     ;
 
     private byte id;

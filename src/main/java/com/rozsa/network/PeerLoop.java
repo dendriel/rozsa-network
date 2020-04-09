@@ -4,10 +4,9 @@ import com.rozsa.network.message.DisconnectedMessage;
 
 import java.net.DatagramPacket;
 import java.net.SocketException;
-import java.util.Arrays;
 import java.util.EnumMap;
 
-public class PeerLoop extends Thread implements PacketSender {
+public class PeerLoop implements PacketSender {
     private final UDPSocket udpSocket;
     private final ConnectionHolder connHolder;
     private final IncomingMessagesQueue incomingMessages;
@@ -16,7 +15,10 @@ public class PeerLoop extends Thread implements PacketSender {
     private final UserDataHandler userDataHandler;
 
     private EnumMap<MessageType, IncomingMessageHandler> messageHandlers;
+    private boolean isStarted;
     private volatile boolean isRunning;
+
+    private Thread threadLoop;
 
     PeerLoop(ConnectionHolder connHolder,
             IncomingMessagesQueue incomingMessages,
@@ -50,7 +52,34 @@ public class PeerLoop extends Thread implements PacketSender {
         messageHandlers.put(MessageType.ACK, new AckMessageHandler(connHolder, cachedMemory));
     }
 
-    public void run() {
+    public void start() {
+        if (isStarted) {
+            return;
+        }
+
+        isStarted = true;
+        isRunning = true;
+        threadLoop = new Thread(this::run);
+        threadLoop.start();
+    }
+
+    public void stop() {
+        if (!isStarted) {
+            return;
+        }
+
+        try {
+            isRunning = false;
+            threadLoop.join(0);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        disconnectAllImmediately();
+        isStarted = false;
+    }
+
+    private void run() {
         while (isRunning) {
             try {
                 loop();
@@ -141,6 +170,13 @@ public class PeerLoop extends Thread implements PacketSender {
 
         if (reason == DisconnectReason.LOCAL_CLOSE) {
             sendProtocol(conn.getAddress(), MessageType.CONNECTION_CLOSED, (short)0);
+        }
+    }
+
+    private void disconnectAllImmediately() {
+        for (Connection conn : connHolder.getConnections()) {
+            conn.setDisconnected(DisconnectReason.LOCAL_CLOSE);
+            handleDisconnect(conn);
         }
     }
 

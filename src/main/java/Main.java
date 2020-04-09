@@ -1,13 +1,14 @@
 import com.rozsa.network.*;
 import com.rozsa.network.message.*;
 
+import java.io.IOException;
 import java.io.NotActiveException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.BitSet;
 
 public class Main {
-    public static void main(String[] args) throws SocketException, NotActiveException, UnknownHostException, InterruptedException {
+    public static void main(String[] args) throws IOException, InterruptedException {
         int serverPort = 9090;
         int clientPort = 8989;
         isServer = true;
@@ -28,6 +29,8 @@ public class Main {
         }
 
         loop();
+
+        System.out.println("Press any key to terminate.");
     }
 
     static boolean isServer;

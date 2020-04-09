@@ -28,6 +28,10 @@ public class NetworkPeer {
         peer.initialize();
     }
 
+    public void terminate() {
+        peer.terminate();
+    }
+
     public int getIncomingMessagesCount() {
         return peer.getIncomingMessagesCount();
     }

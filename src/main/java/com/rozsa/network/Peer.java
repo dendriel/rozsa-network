@@ -39,6 +39,15 @@ public class Peer {
         isInitialized = true;
     }
 
+    public void terminate() {
+        if (!isInitialized) {
+            return;
+        }
+
+        peerLoop.stop();
+        isInitialized = true;
+    }
+
     public int getMaxUserPayload() {
         return config.getMtu() - NetConstants.MsgHeaderSize;
     }
