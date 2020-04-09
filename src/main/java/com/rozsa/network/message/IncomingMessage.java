@@ -5,6 +5,7 @@ import com.rozsa.network.DeliveryMethod;
 import com.rozsa.network.MessageType;
 import com.rozsa.network.NetConstants;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 public class IncomingMessage {
@@ -106,25 +107,27 @@ public class IncomingMessage {
     }
 
     @Override
-    public String toString() {
-        return "IncomingMessage{" +
-                "type=" + type +
-                ", address=" + connection.getAddress() +
-                '}';
-    }
-
-    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         IncomingMessage that = (IncomingMessage) o;
-        return seqNumber == that.seqNumber &&
+        return length == that.length &&
+                seqNumber == that.seqNumber &&
+                isFrag == that.isFrag &&
+                fragGroup == that.fragGroup &&
+                fragGroupLength == that.fragGroupLength &&
+                fragOffset == that.fragOffset &&
+                fragGroupBytesWritten == that.fragGroupBytesWritten &&
                 type == that.type &&
-                connection.equals(that.connection);
+                Arrays.equals(data, that.data) &&
+                messageType == that.messageType &&
+                Objects.equals(connection, that.connection);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(type, seqNumber, connection);
+        int result = Objects.hash(type, length, seqNumber, messageType, connection, isFrag, fragGroup, fragGroupLength, fragOffset, fragGroupBytesWritten);
+        result = 31 * result + Arrays.hashCode(data);
+        return result;
     }
 }

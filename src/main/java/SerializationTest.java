@@ -1,14 +1,13 @@
 import com.rozsa.network.*;
-import com.rozsa.network.message.*;
+import com.rozsa.network.message.ConnectedMessage;
+import com.rozsa.network.message.DisconnectedMessage;
+import com.rozsa.network.message.IncomingUserDataMessage;
 
 import java.io.IOException;
-import java.io.NotActiveException;
-import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.util.BitSet;
 
-public class Main {
-    public static void main(String[] args) throws IOException, InterruptedException {
+public class SerializationTest {
+    public static void SerializationTest(String[] args) throws IOException, InterruptedException {
         int serverPort = 9090;
         int clientPort = 8989;
         isServer = true;
@@ -20,7 +19,13 @@ public class Main {
         config.setPingInterval(1f);
 
         peer = new NetworkPeer(config);
+        peer.addOnConnectedEventListener(SerializationTest::onConnectedEvent);
+        peer.addOnDisconnectedEventListener(SerializationTest::onDisconnectedEvent);
         peer.initialize();
+
+        if (!isServer) {
+            peer.connect("localhost", serverPort);
+        }
 
         loop();
 
@@ -30,7 +35,15 @@ public class Main {
     static boolean isServer;
     static NetworkPeer peer;
 
-    static void sendReliable() {
+    static void onConnectedEvent(ConnectedMessage msg) {
+        System.out.println("> Connected to " + msg.getConnection());
+
+        if (!isServer) {
+            sendReliable(msg.getConnection());
+        }
+    }
+
+    static void sendReliable(Connection conn) {
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
@@ -44,6 +57,9 @@ public class Main {
             if((i % 2) == 0) bits1.set(i);
             if((i % 5) != 0) bits2.set(i);
         }
+
+        System.out.println("Bits1: " + bits1);
+        System.out.println("Bits2: " + bits2);
 
         OutgoingMessage outgoingMsg = peer.createOutgoingMessage(10);
         outgoingMsg.writeByte(Byte.MAX_VALUE);
@@ -62,8 +78,7 @@ public class Main {
         outgoingMsg.writeBoolean(false);
         outgoingMsg.writeBitSet(bits2);
         outgoingMsg.writeString("Rozsa, Vitor");
-
-        peer.sendInternal(outgoingMsg);
+        peer.sendMessage(conn, outgoingMsg, DeliveryMethod.RELIABLE_SEQUENCED, 0);
     }
 
     static void onDisconnectedEvent(DisconnectedMessage msg) {
@@ -72,7 +87,6 @@ public class Main {
 
     private static boolean keepLooping = true;
     private static void loop() throws InterruptedException {
-        sendReliable();
         while (keepLooping) {
             if (peer.getIncomingMessagesCount() == 0) {
                 Thread.sleep(1);
@@ -85,7 +99,6 @@ public class Main {
                 continue;
             }
 
-            System.out.println("Received an " + msg.getMessageType() + " message.");
             System.out.println(msg.readByte());
             System.out.println(msg.readShort());
             System.out.println(msg.readInt());

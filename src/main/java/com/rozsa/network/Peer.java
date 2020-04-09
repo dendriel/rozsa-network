@@ -1,6 +1,7 @@
 package com.rozsa.network;
 
 import com.rozsa.network.message.IncomingMessage;
+import com.rozsa.network.message.IncomingUserDataMessage;
 
 import java.io.NotActiveException;
 import java.net.SocketException;
@@ -126,6 +127,21 @@ public class Peer {
         }
 
         conn.enqueueOutgoingMessage(msg, deliveryMethod, channel);
+    }
+
+    /**
+     * Enqueue an outgoing message as it has received from a remote peer.
+     * @param conn Connection to set in the incoming message created. (may be null).
+     * @param msg Message to be sent internally.
+     */
+    public void sendInternal(Connection conn, OutgoingMessage msg) {
+        IncomingUserDataMessage userDataMessage = new IncomingUserDataMessage(
+                conn, (short)0, msg.getData(), msg.getDataWritten(), MessageType.INTERNAL, false);
+        incomingMessages.enqueue(userDataMessage);
+    }
+
+    public void sendInternal(OutgoingMessage msg) {
+        sendInternal(null, msg);
     }
 
     private void assertInitialized() throws NotActiveException {

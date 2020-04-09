@@ -14,6 +14,7 @@ public enum MessageType {
     ACK(8),
     UNRELIABLE(9),
     RELIABLE(10),
+    INTERNAL(11),
 
     UNRELIABLE_SEQUENCED_00(32, 32),
     UNRELIABLE_SEQUENCED_01(32, 33),
@@ -156,6 +157,7 @@ public enum MessageType {
         idToTypeMapper.put(ACK.getId(), ACK);
         idToTypeMapper.put(UNRELIABLE.getId(), UNRELIABLE);
         idToTypeMapper.put(RELIABLE.getId(), RELIABLE);
+        idToTypeMapper.put(INTERNAL.getId(), INTERNAL);
 
         idToTypeMapper.put(UNRELIABLE_SEQUENCED_00.getId(), UNRELIABLE_SEQUENCED_00);
         idToTypeMapper.put(UNRELIABLE_SEQUENCED_01.getId(), UNRELIABLE_SEQUENCED_01);

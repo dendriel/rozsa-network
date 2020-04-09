@@ -16,7 +16,8 @@ Reliable UDP (RUDP) com.rozsa.network library in Java made by me =].
 - 32 channels for each reliable and sequenced delivery method;
 - Flow control for reliable delivery methods (uses a sliding window);
 - Data buffer recycling;
-- Types serialization/deserialization.
+- Types serialization/deserialization;
+- Message loop sending (send a message to itself - useful for testing).
 
 # Delivery Methods
 

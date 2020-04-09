@@ -100,6 +100,15 @@ public class NetworkPeer {
         peer.sendMessage(conn, msg, deliveryMethod, channel);
     }
 
+    public void sendInternal(OutgoingMessage msg) {
+        peer.sendInternal(msg);
+    }
+
+    public void sendInternal(Connection conn, OutgoingMessage msg) {
+        peer.sendInternal(conn, msg);
+    }
+
+
     public int getMaxUserPayload() {
         return peer.getMaxUserPayload();
     }
