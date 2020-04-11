@@ -47,7 +47,7 @@ public class Peer {
         }
 
         peerLoop.stop();
-        isInitialized = true;
+        isInitialized = false;
     }
 
     public Collection<Connection> getConnections() {
