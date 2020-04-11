@@ -5,6 +5,7 @@ import com.rozsa.network.message.*;
 import java.io.NotActiveException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -119,6 +120,14 @@ public class NetworkPeer {
 
     public void recycle(IncomingMessage msg) {
         peer.recycle(msg);
+    }
+
+    public Collection<Connection> getConnections() {
+        return peer.getConnections();
+    }
+
+    public Connection getConnection(long id) {
+        return peer.getConnection(id);
     }
 
     public IncomingUserDataMessage read() {

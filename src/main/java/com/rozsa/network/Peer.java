@@ -7,6 +7,7 @@ import java.io.NotActiveException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.security.InvalidParameterException;
+import java.util.Collection;
 
 import static com.rozsa.network.ConnectionState.*;
 import static com.rozsa.network.DeliveryMethod.*;
@@ -47,6 +48,14 @@ public class Peer {
 
         peerLoop.stop();
         isInitialized = true;
+    }
+
+    public Collection<Connection> getConnections() {
+        return connHolder.getConnections();
+    }
+
+    public Connection getConnection(long id) {
+        return connHolder.getConnection(id);
     }
 
     public int getMaxUserPayload() {
