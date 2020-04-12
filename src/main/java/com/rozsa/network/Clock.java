@@ -29,6 +29,10 @@ class Clock {
         return nanos / 1000000;
     }
 
+    static long microsToMillis(long micros) {
+        return micros / 1000;
+    }
+
     static long nanosToMicros(long nanos) {
         return nanos / 1000;
     }

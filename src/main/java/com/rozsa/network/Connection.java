@@ -55,8 +55,12 @@ public class Connection {
         return address;
     }
 
-    long getSRtt() {
+    public int getSRtt() {
         return heartbeat.getSRtt();
+    }
+
+    public int getSRttMicros() {
+        return heartbeat.getSRttMicros();
     }
 
     void setConnected() {
