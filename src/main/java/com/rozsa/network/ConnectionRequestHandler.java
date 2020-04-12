@@ -4,7 +4,6 @@ import com.rozsa.network.message.ConnectedMessage;
 import com.rozsa.network.message.ConnectionRequestMessage;
 import com.rozsa.network.message.IncomingUserDataMessage;
 
-import java.util.Arrays;
 
 class ConnectionRequestHandler implements IncomingMessageHandler {
     private final ConnectionHolder connHolder;
@@ -31,6 +30,12 @@ class ConnectionRequestHandler implements IncomingMessageHandler {
     public void handle(Address addr, MessageType type, short seqNumber, byte[] data, int length, boolean isFrag) {
         Connection conn = connHolder.getHandshake(addr.getId());
         if (conn == null) {
+            conn = connHolder.getConnection(addr.getId());
+            if (conn != null) {
+                Logger.warn("Connection %s is already established. Must timeout before reconnection.", conn);
+                cachedMemory.freeBuffer(data);
+                return;
+            }
             conn = connHolder.createAsIncomingHandshake(addr);
         }
 

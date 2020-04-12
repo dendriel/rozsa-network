@@ -9,6 +9,7 @@ Reliable UDP (RUDP) com.rozsa.network library in Java made by me =].
 - Latency monitoring (uses weighted average to calculate latency);
 - Latency update event (value in micros and millis);
 - Connection status events (connected; disconnected);
+- Connection/Disconnection events flow;
 - Disconnection reason;
 - Synchronized network events delivery (NetworkPeer.read() may return a data message or execute an event method);
 - Data delivery;
@@ -42,6 +43,18 @@ Reliable UDP (RUDP) com.rozsa.network library in Java made by me =].
 16 bits - fragment total length;
 16 bits - fragment offset.
 ```
+
+# Connection/Disconnection events flow
+
+The library tries to ensure that a connection event will be followed by a disconnection event
+(when remote peer disconnects). That is, the same address will never be allowed to reconnect
+while having an active connection. The first connection must close (timeout or graceful disconnected)
+before a new connection for the same address is accepted.
+
+To get along with this behavior when graceful disconnection is not possible, it may be interesting
+to have a handshake interval larger than a connection timeout interval. This way, if a connection
+request happens while another connection from the same peer is still active, the active connection
+may timeout (and disconnects) before the new connection give up trying to connect.
 
 # Channels
 
@@ -116,6 +129,10 @@ Handled types right now:
 - String.
 
 Writing types directly into the message easies testing and may be fit for some type of messages (like authentication message). However, some writeable types adds some payload overhead. For example, the byte array and string writing adds two extra bytes used to track their lengths in reading operations. 
+
+# Peer Configurations
+
+TODO
 
 # TODO
 
