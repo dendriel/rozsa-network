@@ -24,6 +24,7 @@ public class Main {
         peer = new NetworkPeer(config);
         peer.addOnConnectedEventListener(Main::onConnectedEvent);
         peer.addOnDisconnectedEventListener(Main::onDisconnectedEvent);
+        peer.addOnPingUpdatedEventListener(ConnectionApprovalTest::onPingUpdatedEvent);
         peer.initialize();
 
         if (!isServer) {

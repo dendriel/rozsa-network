@@ -18,7 +18,7 @@ class ConnectionHeartbeat {
     private short lastPingSentSeqNumber;
     private short currSeqNumber;
 
-    private int sRtt;
+    private long sRtt;
 
     ConnectionHeartbeat(Connection conn, PacketSender sender, IncomingMessagesQueue incomingMessages, PeerConfig config) {
         this.conn = conn;
@@ -58,11 +58,11 @@ class ConnectionHeartbeat {
     }
 
     int getSRtt() {
-        return (int)Clock.microsToMillis(sRtt);
+        return (int)Clock.nanosToMillis(sRtt);
     }
 
     int getSRttMicros() {
-        return sRtt;
+        return (int)Clock.nanosToMicros(sRtt);
     }
 
     private void sendPing() {
@@ -84,11 +84,10 @@ class ConnectionHeartbeat {
         }
 
         long lastRtt = Clock.getTimePassedSinceInNanos(lastSentPingTime);
-        long precisionSRtt = (long)(sRtt * 0.875 + lastRtt * 0.125);
-        sRtt = (int) Clock.nanosToMicros(precisionSRtt);
-//        Logger.info("New SRTT %dus - lastRtt %dus", Clock.nanosToMicros(sRtt), Clock.nanosToMicros(lastRtt));
+        sRtt = (long)(sRtt * 0.875 + lastRtt * 0.125);
+//        Logger.info("New SRTT %dms - lastRtt %dus", Clock.microsToMillis(sRtt), Clock.nanosToMicros(lastRtt));
         if (isPingUpdatedEventEnabled) {
-            PingUpdatedMessage pingUpdatedMessage = new PingUpdatedMessage(conn, Clock.nanosToMicros(precisionSRtt));
+            PingUpdatedMessage pingUpdatedMessage = new PingUpdatedMessage(conn, Clock.nanosToMicros(sRtt));
             incomingMessages.enqueue(pingUpdatedMessage);
         }
     }
