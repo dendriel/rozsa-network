@@ -46,12 +46,12 @@ Reliable UDP (RUDP) com.rozsa.network library in Java made by me =].
 
 # Connection/Disconnection events flow
 
-The library tries to ensure that a connection event will be followed by a disconnection event
+The library tries to ensure that a connection event will always be followed by a disconnection event
 (when remote peer disconnects). That is, the same address will never be allowed to reconnect
-while having an active connection. The first connection must close (timeout or graceful disconnected)
+while having an active connection. The first connection must close (timeout or graceful disconnection)
 before a new connection for the same address is accepted.
 
-To get along with this behavior when graceful disconnection is not possible, it may be interesting
+To get along with this behavior (when graceful disconnection is not possible), it may be interesting
 to have a handshake interval larger than a connection timeout interval. This way, if a connection
 request happens while another connection from the same peer is still active, the active connection
 may timeout (and disconnects) before the new connection give up trying to connect.
