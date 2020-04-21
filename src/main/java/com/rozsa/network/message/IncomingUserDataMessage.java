@@ -13,6 +13,10 @@ public class IncomingUserDataMessage extends IncomingMessage {
         super(IncomingMessageType.USER_DATA, connection, seqNumber, data, length, type, isFrag);
     }
 
+    public int getDataRead() {
+        return dataIdx;
+    }
+
     public BitSet readBitSet() {
         int length = (data[dataIdx++] & 0xFF) | (data[dataIdx++] << 8 & 0xFF);
         byte[] bytes = new byte[length];
