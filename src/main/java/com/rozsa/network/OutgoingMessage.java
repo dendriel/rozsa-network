@@ -34,7 +34,7 @@ public final class OutgoingMessage {
     }
 
     public int getLength() {
-        return data.length;
+        return dataLength;
     }
 
     public int getDataWritten() {
@@ -145,10 +145,10 @@ public final class OutgoingMessage {
     }
 
     private void reallocateDataIfOverflow(int length) {
-        int overflowLength = dataIdx + length - data.length;
+        int overflowLength = dataIdx + length - dataLength;
         if (overflowLength > 0) {
             reallocateData(overflowLength);
-            Logger.debug("Reallocated buffer in %d bytes. Total buffer size: %d", overflowLength, data.length);
+            Logger.debug("Reallocated buffer in %d bytes. Total buffer size: %d", overflowLength, dataLength);
         }
     }
 
