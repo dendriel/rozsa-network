@@ -3,14 +3,14 @@ package com.rozsa.network.message;
 import com.rozsa.network.Connection;
 
 public class ConnectionRequestMessage extends IncomingMessage {
-    private final IncomingMessage hailMessage;
+    private final IncomingUserDataMessage hailMessage;
 
-    public ConnectionRequestMessage(Connection connection, IncomingMessage hailMessage) {
+    public ConnectionRequestMessage(Connection connection, IncomingUserDataMessage hailMessage) {
         super(IncomingMessageType.CONNECTION_REQUEST, connection);
         this.hailMessage = hailMessage;
     }
 
-    public IncomingMessage getHailMessage() {
+    public IncomingUserDataMessage getHailMessage() {
         return hailMessage;
     }
 }
