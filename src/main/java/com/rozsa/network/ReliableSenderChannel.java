@@ -82,7 +82,7 @@ class ReliableSenderChannel implements SenderChannel {
     }
 
     public void enqueue(OutgoingMessage msg) {
-        int msgLen = msg.getLength();
+        int msgLen = msg.getDataWritten();
         int userPayload = mtu - NetConstants.MsgHeaderSize;
         if (msgLen <= userPayload) {
             outgoingMessages.add(msg);
@@ -96,7 +96,7 @@ class ReliableSenderChannel implements SenderChannel {
         int fragGroup = lastFragmentationGroupId.getAndIncrement();
 
         byte[] dataToSend = msg.getData();
-        int dataToSendLength = msg.getLength();
+        int dataToSendLength = msg.getDataWritten();
         int maxFragSize = mtu - NetConstants.MsgTotalFragHeaderSize;
         int nextFragOffset = 0;
         int remainingBytesToFrag = msgLen;

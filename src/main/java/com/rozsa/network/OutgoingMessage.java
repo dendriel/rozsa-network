@@ -87,7 +87,7 @@ public final class OutgoingMessage {
     }
 
     public void writeLong(long value) {
-        int totalLength = 8;
+        final int totalLength = 8;
         reallocateDataIfOverflow(totalLength);
 
         for (int i = 7; i >= 0; i--) {
