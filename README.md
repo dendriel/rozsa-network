@@ -1,5 +1,5 @@
 # Rozsa Network
-Reliable UDP (RUDP) com.rozsa.network library in Java made by me =].
+Reliable UDP (RUDP) com.rozsa.network library in Java =].
 
 # Features
 
