@@ -146,4 +146,5 @@ TODO
   - Messages send/received.
 - Add remote time offset calculation;
 - Create server and client utility classes
-  - Allow to send the same message to multiple connections.
+  - Allow to send the same message to multiple connections;
+- Add unit tests (and maybe system tests).
