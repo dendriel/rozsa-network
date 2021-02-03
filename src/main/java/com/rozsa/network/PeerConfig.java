@@ -2,15 +2,57 @@ package com.rozsa.network;
 
 //TODO: add interface. Create a builder.
 public class PeerConfig {
+    /**
+     * UDP port to connect to (client) or listen to (server).
+     */
     private int port;
+
+    /**
+     * Maximum handshakes attempts while trying to connect to a peer.
+     */
     private int maximumHandshakeAttempts;
+
+    /**
+     * Interval in milliseconds before handshake retry.
+     */
     private long intervalBetweenHandshakes;
+
+    /**
+     * Maximum size of UDP data receiving buffer.
+     */
     private int receiveBufferSize;
+
+    /**
+     * Ping (heartbeat) interval. Also used to calculate latency.
+     */
     private float pingInterval;
+
+    /**
+     * Maximu waiting time to consider connection lost after not receiving any pings from connected peer.
+     */
     private float connectionTimeout;
+
+    /**
+     * Enable connection latency report when updated.
+     */
     private boolean isPingUpdatedEventEnabled;
+
+    /**
+     * Maximum number of byte[] to keep in cache. (if maximum is reached, some random entry will be removed to make
+     * room to new cache entry).
+     */
     private int maxCachedBufferCount;
+
+    /**
+     * Maximum transfer unit (UDP packet) without couting the RUDP header. If you set this wrong, some user may have
+     * connection issues due to internet providers dropping packets. Also, use getMaxUserPayload() to subtract the RUDP
+     * header size.
+     */
     private int mtu;
+
+    /**
+     * Enable connection approval events.
+     */
     private boolean connectionApprovalRequired;
 
     public PeerConfig() {

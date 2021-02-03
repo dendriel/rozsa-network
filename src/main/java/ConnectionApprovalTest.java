@@ -10,10 +10,10 @@ import java.util.Random;
 
 // Testing purpose only. The code is messy, I know.
 public class ConnectionApprovalTest {
-    public static void ConnectionApprovalTest(String[] args) throws SocketException, NotActiveException, UnknownHostException, InterruptedException {
+    public static void Main(String[] args) throws SocketException, NotActiveException, UnknownHostException, InterruptedException {
         int serverPort = 9090;
         int clientPort = 8989;
-//        isServer = true;
+        isServer = true;
 
         int targetPort = isServer ? serverPort : clientPort;
 
@@ -68,15 +68,10 @@ public class ConnectionApprovalTest {
         if (!isServer) {
             sendReliable(msg.getConnection());
         }
-
-        expectedOrder = 0;
     }
 
     static void sendReliable(Connection conn) {
-//        int count = 3072;
-//        int count = 2048;
         int count = 96;
-//        int count = 1;
 
         try {
             Thread.sleep(1000);
@@ -84,23 +79,12 @@ public class ConnectionApprovalTest {
             e.printStackTrace();
         }
 
-        Random random = new Random();
-
         for (int i = 0;  i < count; i++) {
-
-            // 1000
-//            String msg = "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789";
-//            msg = msg.concat(msg);
-
             byte[] msg = new byte[100];
             Arrays.fill(msg, (byte)i);
 
-//            String msg = String.valueOf(i);
             OutgoingMessage outgoingMsg = peer.createOutgoingMessage(msg.length);
-//            outgoingMsg.writeString(msg);
             outgoingMsg.writeBytes(msg);
-//            outgoingMsg.writeString(String.format(" - extra text!"));
-//            peer.sendMessage(conn, outgoingMsg, DeliveryMethod.RELIABLE_ORDERED, random.nextInt(32));
             peer.sendMessage(conn, outgoingMsg, DeliveryMethod.RELIABLE_SEQUENCED, 0);
         }
 
@@ -110,8 +94,6 @@ public class ConnectionApprovalTest {
         System.out.println("Disconnected from " + msg.getConnection() + " reason: " + msg.getReason());
     }
 
-    static int messagesReceived = 0;
-    static short expectedOrder;
     private static boolean keepLooping = true;
     private static void loop() throws InterruptedException {
         while (keepLooping) {
@@ -128,23 +110,8 @@ public class ConnectionApprovalTest {
 
             byte[] buf = new byte[msg.getLength()];
             System.arraycopy(msg.getData(), 0, buf, 0, buf.length);
-//            String val = new String(buf[0]);
-            Logger.info("Received message \"" + buf[0] + "\" - total: " + messagesReceived + " " + msg.getDeliveryMethod() + " " + msg.getChannel());
 
-//            if (Integer.parseInt(val) != expectedOrder) {
-//                System.out.printf("Received out of order message: %s expected: %d\n", val, expectedOrder);
-//            }
-            expectedOrder++;
-            messagesReceived++;
-
-//            short seqNumber = Short.parseShort(val);
-//            if (seqNumber < expectedOrder) {
-//                System.out.printf("Received out of sequence message: %d expected >= %d\n", seqNumber, expectedOrder);
-//            }
-//            expectedOrder = (short)((seqNumber + 1) % 1024);
-//            messagesReceived++;
-
-//            Logger.info("Received message \"" + val + "\" - total: " + messagesReceived + " " + msg.getDeliveryMethod() + " " + msg.getChannel());
+            // Do stuff with buf.
 
             peer.recycle(msg);
         }

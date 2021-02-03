@@ -65,7 +65,7 @@ Effectively, a channel is a tag that one can check in an incoming message to sor
 - 32 reliable ordered channels.
 
 To use a channel just pass its ID when sending a message using one of the above delivery methos:
-```
+```Java
 // send an unreliable sequenced message at channel 7.
 peer.sendMessage(conn, outgoingMsg, DeliveryMethod.UNRELIABLE_SEQUENCED, 7);
 
@@ -91,10 +91,6 @@ message that will be fragmented is 64kB (65536 bytes).
 Fragmentation should be used for setup scenarios or very low send ratio situations. It adds 6 extra bytes
 to the RUDP header for controlling the multiple fragments and the message may be delayed at the target end
 until all fragments arrive.
-
-# Connection Approval
-
-TODO
 
 # Types Serialization and Deserialization
 To send a message, one can get the data buffer (byte[]) and write/read directly into/from it. Another approach
@@ -132,11 +128,76 @@ Writing types directly into the message easies testing and may be fit for some t
 
 # Peer Configurations
 
-TODO
+Peer configuration is provided by PeerConfig class and is used by both client and server. Default values are retrieved from NetConstants.
+
+```Java
+/**
+ * UDP port to connect to (client) or listen to (server).
+ */
+int port;
+
+/**
+ * Maximum handshakes attempts while trying to connect to a peer.
+ */
+int maximumHandshakeAttempts;
+
+/**
+ * Interval in milliseconds before handshake retry.
+ */
+long intervalBetweenHandshakes;
+
+/**
+ * Maximum size of UDP data receiving buffer.
+ */
+int receiveBufferSize;
+
+/**
+ * Ping (heartbeat) interval. Also used to calculate latency.
+ */
+float pingInterval;
+
+/**
+ * Maximu waiting time to consider connection lost after not receiving any pings from connected peer.
+ */
+float connectionTimeout;
+
+/**
+ * Enable connection latency report when updated.
+ */
+boolean isPingUpdatedEventEnabled;
+
+/**
+ * Maximum number of byte[] to keep in cache. (if maximum is reached, some random entry will be removed to make
+ * room to new cache entry).
+ */
+int maxCachedBufferCount;
+
+/**
+ * Maximum transfer unit (UDP packet) without couting the RUDP header. If you set this wrong, some user may have
+ * connection issues due to internet providers dropping packets. Also, use getMaxUserPayload() to subtract the RUDP
+ * header size.
+ */
+int mtu;
+
+/**
+ * Enable connection approval events.
+ */
+boolean connectionApprovalRequired;
+```
+
+PeerConfig usage example:
+
+```Java
+PeerConfig config = new PeerConfig(targetPort);
+config.setPingInterval(1f);
+config.setMaximumHandshakeAttempts(10);
+config.setIntervalBetweenHandshakes(1000);
+
+peer = new NetworkPeer(config);
+```
 
 # TODO
 
-- Send Internal method to help testing;
 - Add message coalescing;
 - Review header space usage:
   - Sequence numbers doesn't use all 16 bits.
@@ -147,4 +208,5 @@ TODO
 - Add remote time offset calculation;
 - Create server and client utility classes
   - Allow to send the same message to multiple connections;
-- Add unit tests (and maybe system tests).
+- Add unit tests (and maybe system tests);
+- Add Client and Server utility classes.
