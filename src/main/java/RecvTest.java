@@ -2,13 +2,9 @@ import com.rozsa.network.*;
 import com.rozsa.network.message.*;
 
 import java.io.IOException;
-import java.io.NotActiveException;
-import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.util.BitSet;
 
-public class Main {
-    public static void main(String[] args) throws IOException, InterruptedException {
+public class RecvTest {
+    public static void recvTest(String[] args) throws IOException, InterruptedException {
         int serverPort = 9090;
         int clientPort = 8989;
         isServer = Boolean.getBoolean("server");
@@ -22,8 +18,8 @@ public class Main {
         config.setIntervalBetweenHandshakes(1000);
 
         peer = new NetworkPeer(config);
-        peer.addOnConnectedEventListener(Main::onConnectedEvent);
-        peer.addOnDisconnectedEventListener(Main::onDisconnectedEvent);
+        peer.addOnConnectedEventListener(RecvTest::onConnectedEvent);
+        peer.addOnDisconnectedEventListener(RecvTest::onDisconnectedEvent);
         peer.addOnPingUpdatedEventListener(ConnectionApprovalTest::onPingUpdatedEvent);
         peer.initialize();
 

@@ -196,6 +196,19 @@ config.setIntervalBetweenHandshakes(1000);
 peer = new NetworkPeer(config);
 ```
 
+# Build
+
+```shell
+gradlew build
+
+or (windows)
+
+gradlew.bat build
+```
+
+The built library can be found at build/libs/rozsa-network-1.0-SNAPSHOT.jar
+
+
 # TODO
 
 - Add message coalescing;

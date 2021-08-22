@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.util.BitSet;
 
 public class SerializationTest {
-    public static void SerializationTest(String[] args) throws IOException, InterruptedException {
+    public static void serializationTest(String[] args) throws IOException, InterruptedException {
         int serverPort = 9090;
         int clientPort = 8989;
         isServer = true;

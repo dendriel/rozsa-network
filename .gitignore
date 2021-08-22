@@ -74,3 +74,11 @@ cmake-build-*/
 # IntelliJ
 out/
 target/
+build/
+
+target/
+
+# Gradle
+.gradle/**
+**/build/
+!src/**/build/

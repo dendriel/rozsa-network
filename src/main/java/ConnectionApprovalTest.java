@@ -10,7 +10,7 @@ import java.util.Random;
 
 // Testing purpose only. The code is messy, I know.
 public class ConnectionApprovalTest {
-    public static void Main(String[] args) throws SocketException, NotActiveException, UnknownHostException, InterruptedException {
+    public static void connectionApprovalTest(String[] args) throws SocketException, NotActiveException, UnknownHostException, InterruptedException {
         int serverPort = 9090;
         int clientPort = 8989;
         isServer = true;
