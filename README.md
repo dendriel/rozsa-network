@@ -206,7 +206,7 @@ or (windows)
 gradlew.bat build
 ```
 
-The built library can be found at build/libs/rozsa-network-1.0.0.jar
+The built library can be found at lib/build/libs/rozsa-network-1.0.0.jar
 
 
 # TODO
