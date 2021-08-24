@@ -1,24 +1,18 @@
-plugins {
-    id 'java-library'
-}
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'java-library'
 
-repositories {
-    mavenCentral()
-}
+    repositories {
+        mavenCentral()
+    }
 
-group = 'com.rozsa.network'
-version = '1.0-SNAPSHOT'
-description = 'rozsa-network'
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(11)
+        }
+    }
 
-java.sourceCompatibility = JavaVersion.VERSION_1_8
-
-dependencies {
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.1'
-
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
-}
-
-
-tasks.named('test') {
-    useJUnitPlatform()
+    test {
+        useJUnitPlatform()
+    }
 }

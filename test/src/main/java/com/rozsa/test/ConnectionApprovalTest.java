@@ -1,3 +1,5 @@
+package com.rozsa.test;
+
 import com.rozsa.network.*;
 import com.rozsa.network.message.*;
 
@@ -5,7 +7,6 @@ import java.io.NotActiveException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
-import java.util.Random;
 
 
 // Testing purpose only. The code is messy, I know.

@@ -1,3 +1,5 @@
+package com.rozsa.test;
+
 import com.rozsa.network.*;
 import com.rozsa.network.message.*;
 
