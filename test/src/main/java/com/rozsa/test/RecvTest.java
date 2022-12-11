@@ -5,11 +5,14 @@ import com.rozsa.network.message.*;
 
 import java.io.IOException;
 
+import static com.rozsa.test.ArgsUtils.getBoolean;
+
 public class RecvTest {
     public static void recvTest(String[] args) throws IOException, InterruptedException {
         int serverPort = 9090;
         int clientPort = 8989;
         isServer = Boolean.getBoolean("server");
+//        isServer = getBoolean(args, "server");
 
         int targetPort = isServer ? serverPort : clientPort;
 
